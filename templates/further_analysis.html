@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Further Analysis</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            margin-top: 50px;
+        }
+        h2 {
+            color: #4CAF50;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        button {
+            margin-top: 30px;
+            padding: 10px 20px;
+            font-size: 1em;
+        }
+        .hidden {
+            display: none;
+        }
+        .similar-segments-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .similar-segment {
+            margin: 10px;
+        }
+        .similar-segment img {
+            max-width: 200px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .similar-segment p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Further Image Analysis! Click the Object you want</h2>
+        <img id="inputImageForAnalysis" src="{{ image_path }}" alt="Image for Analysis" onclick="getImageClickCoordinatesForAnalysis(event)">
+
+        <!-- Segmented Image Display -->
+        <h2>Segmented Image</h2>
+        <img id="segmentedImageForAnalysis" alt="Segmented Image" style="max-width: 100%; height: auto;">
+
+        <!-- User Confirmation -->
+        <h2 id="segmentClassMessage"></h2>
+        <button id="confirmButton" class="hidden" onclick="confirmSegmentClass(true)">Yes</button>
+        <button id="denyButton" class="hidden" onclick="confirmSegmentClass(false)">No</button>
+
+        <!-- Form to select a different class -->
+        <div id="selectClassForm" style="display:none;">
+            <h2>Select the Correct Class</h2>
+            <select id="classSelection"></select>
+            <button onclick="submitClassSelection()">Submit</button>
+        </div>
+
+        <!-- Similar Segments Display -->
+        <h2>Similar Segments</h2>
+        <div id="similarSegmentsContainer"></div>
+
+        <!-- Chat Session -->
+        <div class="container">
+            <h2>Chat with LLaVA</h2>
+            <div id="chatWindow" style="border:1px solid #ccc; height:200px; overflow-y:scroll; margin-bottom:10px; padding:10px;">
+                <!-- Chat messages will appear here -->
+            </div>
+            <input type="text" id="chatInput" placeholder="Type your message here" style="width:70%; padding:10px;">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+
+        <!-- Button to return to the main page or previous page -->
+        <a href="{{ url_for('upload_form') }}">
+            <button>Return to Main Page</button>
+        </a>
+    </div>
+
+    <script>
+        let croppedImagePath = "";
+        let availableClasses = [];
+
+        function getImageClickCoordinatesForAnalysis(event) {
+            var image = document.getElementById('inputImageForAnalysis');
+            var rect = image.getBoundingClientRect();
+            var x = event.clientX - rect.left; // x coordinate
+            var y = event.clientY - rect.top; // y coordinate
+
+            fetch('/process_click_for_analysis', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({x: x, y: y, image_path: "{{ image_path }}"})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.segmented_image) {
+                    var segmentedImg = document.getElementById('segmentedImageForAnalysis');
+                    segmentedImg.src = 'data:image/png;base64,' + data.segmented_image;
+                }
+                if (data.segment_class) {
+                    document.getElementById('segmentClassMessage').textContent = "Is your segmented image a " + data.segment_class + "?";
+                    croppedImagePath = data.cropped_image_path;
+                    document.getElementById('confirmButton').classList.remove('hidden');
+                    document.getElementById('denyButton').classList.remove('hidden');
+                }
+                if (data.available_classes) {
+                    availableClasses = data.available_classes;
+                }
+            })
+            .catch(error => {
+                console.error('There has been a problem with your fetch operation:', error);
+            });
+        }
+
+        function confirmSegmentClass(isCorrect) {
+            if (isCorrect) {
+                const segmentClassMessage = document.getElementById('segmentClassMessage').textContent;
+                // Correctly extract the segment class without the question mark
+                const segmentClass = segmentClassMessage.split(" ")[5].replace("?", "");
+                fetch('/confirm_classification', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({segment_class: segmentClass, cropped_image_path: croppedImagePath})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    displayResults(data);
+                })
+                .catch(error => {
+                    console.error('There has been a problem with your fetch operation:', error);
+                });
+            } else {
+                populateClassSelection(availableClasses);
+            }
+            document.getElementById('confirmButton').classList.add('hidden');
+            document.getElementById('denyButton').classList.add('hidden');
+        }
+
+
+        function populateClassSelection(classes) {
+            var select = document.getElementById('classSelection');
+            select.innerHTML = '';
+            classes.forEach(cls => {
+                var option = document.createElement('option');
+                option.value = cls;
+                option.textContent = cls;
+                select.appendChild(option);
+            });
+            document.getElementById('selectClassForm').style.display = 'block';
+        }
+
+        function submitClassSelection() {
+            var selectedClass = document.getElementById('classSelection').value;
+            confirmSegmentClassWithClass(selectedClass);
+        }
+
+        function confirmSegmentClassWithClass(selectedClass) {
+            fetch('/confirm_classification', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({segment_class: selectedClass, cropped_image_path: croppedImagePath})
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayResults(data);
+            })
+            .catch(error => {
+                console.error('There has been a problem with your fetch operation:', error);
+            });
+        }
+
+        function displayResults(data) {
+            if (data.segmented_image) {
+                var segmentedImg = document.getElementById('segmentedImageForAnalysis');
+                segmentedImg.src = 'data:image/png;base64,' + data.segmented_image;
+            }
+            // Display LLaVA's response in the chat window
+            if (data.llava_response) {
+                displayMessage("LLaVA: " + data.llava_response);
+            }
+            // Display similar segments
+            if (data.similar_segments_info) {
+                displaySimilarSegments(data.similar_segments_info);
+            }
+        }
+
+        function displaySimilarSegments(similarSegments) {
+            var container = document.getElementById('similarSegmentsContainer');
+            container.innerHTML = '';
+
+            var row1 = document.createElement('div');
+            row1.className = 'similar-segments-row';
+
+            var row2 = document.createElement('div');
+            row2.className = 'similar-segments-row';
+
+            similarSegments.forEach(function(segment, index) {
+                var listItem = document.createElement('div');
+                listItem.className = 'similar-segment';
+
+                var img = document.createElement('img');
+                img.src = '/' + segment['Full Path'];  // Assuming segment paths are relative to the root
+
+                var desc = document.createElement('p');
+                desc.textContent = `Distance: ${segment['Average_Distance']}`;
+
+                var country = document.createElement('p');
+                country.textContent = `Country: ${segment['Full Path'].split('/')[1]}`;
+
+                listItem.appendChild(img);
+                listItem.appendChild(desc);
+                listItem.appendChild(country);
+
+                if (index < 5) {
+                    row1.appendChild(listItem);
+                } else {
+                    row2.appendChild(listItem);
+                }
+            });
+
+            container.appendChild(row1);
+            container.appendChild(row2);
+        }
+
+        function sendMessage() {
+            var message = document.getElementById('chatInput').value;
+            document.getElementById('chatInput').value = ''; // Clear the input after sending
+            displayMessage("You: " + message); // Display the user's message in the chat
+
+            // Send the message to the Flask backend
+            fetch('/send_message', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: message})
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayMessage("LLaVA: " + data.reply); // Display LLaVA's reply
+            });
+        }
+
+        function displayMessage(message) {
+            var chatWindow = document.getElementById('chatWindow');
+            chatWindow.innerHTML += "<p>" + message + "</p>"; // Add the message to the chat
+            chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll to the latest message
+        }
+    </script>
+</body>
+</html>

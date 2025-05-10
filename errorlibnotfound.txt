@@ -1,0 +1,65 @@
+ sudo apt-get purge -y docker-engine docker docker.io docker-ce docker-ce-cli
+ sudo apt-get autoremove -y --purge docker-engine docker docker.io docker-ce
+ sudo rm -rf /var/lib/docker /etc/docker
+ sudo rm /etc/apparmor.d/docker
+ sudo groupdel docker
+ sudo rm -rf /var/run/docker.sock
+ sudo apt-get update
+ sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+ 
+ 
+ 
+ 
+ # Clean up build cache
+docker builder prune -a -f
+
+# Stop and remove all containers
+docker stop $(docker ps -a -q)
+docker rm $(docker ps -a -q)
+
+# Remove all images
+docker rmi -f $(docker images -a -q)
+
+# Remove all volumes
+docker volume rm $(docker volume ls -q)
+
+# Remove all networks
+docker network rm $(docker network ls -q)
+
+# Prune all unused data
+docker system prune -a --volumes
+
+# Build your Docker image
+docker build -t your_image_name .
+
+# Run your Docker container
+docker run -d --name your_container_name your_image_name
+
+
+# First stop all containers
+docker stop $(docker ps -a -q)
+
+# Now remove everything
+docker system prune -a --volumes -f
+
+# Stop all containers
+docker stop $(docker ps -a -q)
+
+# Remove all containers
+docker rm $(docker ps -a -q)
+
+# Remove all images
+docker rmi -f $(docker images -a -q)
+
+# Remove all volumes
+docker volume rm $(docker volume ls -q)
+
+# Final cleanup
+docker system prune -a --volumes -f
+
+docker ps -a
+docker images
+
+sudo DOCKER_BUILDKIT=1 docker build --network=host -f Dockerfile.migration -t migration .
+
+sudo DOCKER_BUILDKIT=1 docker build --network=host -f Dockerfile -t llava_app .

@@ -1,0 +1,5 @@
+flask
+numpy
+pillow
+supervision==0.23.0
+requests

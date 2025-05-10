@@ -1,0 +1,10 @@
+FROM python:3.9
+
+
+# Pre-install required packages
+RUN pip install pymongo pandas numpy
+
+WORKDIR /app
+
+# Command will be provided by docker-compose
+CMD ["python", "migrate_to_mongodb.py"]

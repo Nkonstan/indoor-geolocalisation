@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Image Analysis Results</title> <style>
+    body {
+        text-align: center;
+        font-family: Arial, sans-serif;
+        background-color: white;
+        color: black;
+        padding: 20px; /* Added padding */
+    }
+
+    .container {
+        /* Removed flex rules, let content flow naturally */
+        /* align-items: center; */
+        /* flex-direction: column; */
+        margin-top: 20px; /* Reduced top margin */
+        max-width: 2100px; /* Keep max-width */
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Add styles for new main title and intro */
+    h1.main-title {
+        color: #333;
+        margin-bottom: 5px;
+    }
+    p.intro-note {
+        font-size: 0.9em;
+        color: #555;
+        margin-top: 0;
+        margin-bottom: 25px; /* Space before main content */
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+        font-style: italic;
+    }
+
+    .main-content-wrapper {
+        display: flex;
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        justify-content: space-between; /* Keep space between */
+        width: 100%;
+        /* max-width: 2100px; */ /* Handled by container */
+        /* margin: 0 auto; */ /* Handled by container */
+        gap: 20px; /* Increased gap */
+    }
+
+    .left-content {
+        flex: 2; /* Give left content more space */
+        min-width: 600px; /* Minimum width before wrapping */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* Basic Elements */
+    h2 {
+        color: #4CAF50;
+        margin-bottom: 5px; /* Consistent margin */
+    }
+    /* Add style for section descriptions */
+    .section-description {
+        font-size: 0.9em;
+        color: #555;
+        margin-top: 0;
+        margin-bottom: 15px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center; /* Center descriptions */
+    }
+
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    li {
+        margin: 4px 0; /* Adjusted */
+        font-size: 0.9em; /* Adjusted */
+    }
+
+    button, .button-link { /* Style link button */
+        margin-top: 10px; /* Adjusted */
+        margin-left: 5px;
+        margin-right: 5px;
+        padding: 10px 20px;
+        font-size: 1em;
+        cursor: pointer;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .button-link:hover, button:hover {
+         background-color: #45a049;
+    }
+
+    /* Chart Styles */
+    .chart-container-wrapper {
+        /* Removed negative margins */
+        /* margin-left: -100px; */
+        /* margin-top: -20px; */
+        display: flex; /* Use flex for centering */
+        flex-direction: column;
+        align-items: center;
+        width: 100%; /* Take available width */
+        max-width: 400px; /* Limit chart size */
+    }
+
+    .chart-container {
+        position: relative;
+        height: 30vh; /* Keep relative height */
+        min-height: 250px; /* Minimum size */
+        width: 100%; /* Use full width of its wrapper */
+        max-width: 350px; /* Max size */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .chart-wrapper {
+        display: flex;
+        flex-direction: column; /* Stack chart and explanation */
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        width: 100%;
+    }
+
+    .chart-center {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 60%; /* Adjusted */
+        height: 60%; /* Adjusted */
+        top: 20%; /* Adjusted */
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+    }
+    /* Style for heading inside chart */
+     .chart-center h4 {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #333;
+    }
+    /* Style for score explanation */
+    .score-explanation {
+         font-size: 0.8em;
+         color: #666;
+         margin-top: 10px;
+    }
+
+    /* Image and Container Styles */
+    .image-row {
+        display: flex;
+        flex-wrap: wrap; /* Allow wrapping */
+        justify-content: center;
+        align-items: flex-start;
+        margin-top: 20px;
+        width: 100%;
+        gap: 15px; /* Gap between items */
+    }
+
+    .image-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 350px; /* Explicitly set width */
+    }
+
+    .image-title {
+        min-height: 40px; /* Use min-height */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 5px; /* Adjusted */
+        text-align: center;
+    }
+
+    .resized-image {
+        width: 350px;
+        height: 350px;
+        object-fit: contain; /* Maintain aspect ratio */
+        border: 1px solid #eee; /* Subtle border */
+    }
+
+    /* Material Recognition Styles */
+    .material-section { /* Added wrapper for title and content */
+         width: 100%;
+         margin-top: 30px; /* Space above section */
+         padding-top: 20px; /* Space below previous row */
+         border-top: 1px solid #eee; /* Separator */
+    }
+    .material-recognition {
+        display: flex;
+        flex-wrap: wrap; /* Allow wrap */
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin-top: 10px; /* Reduced top margin */
+        gap: 30px; /* Gap between items */
+    }
+
+    .material-recognition img {
+        /* margin-right: 20px; */ /* Use gap */
+        align-self: center;
+        max-width: 350px; /* Match other images */
+    }
+    .material-image-container { /* Wrapper for image and caption */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .material-image-container small {
+        margin-top: 5px;
+        color: #555;
+    }
+
+    .material-table {
+        width: auto; /* Auto width */
+        min-width: 250px; /* Min width */
+        border-collapse: collapse;
+        /* margin-left: 20px; */ /* Use gap */
+        /* display: table; */ /* Not needed with flex */
+        align-self: center; /* Align vertically */
+    }
+
+    .material-table th, .material-table td {
+        border: 1px solid #ddd;
+        padding: 6px; /* Adjusted */
+        text-align: left;
+        font-size: 0.9em; /* Adjusted */
+    }
+
+    .material-table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+
+    .material-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .material-table tr:hover {
+        background-color: #f1f1f1;
+    }
+
+    /* Chat Styles */
+    .chat-sidebar {
+        flex: 1; /* Take remaining space */
+        min-width: 400px; /* Minimum width */
+        max-width: 800px; /* Max width */
+        position: sticky;
+        top: 20px;
+        height: calc(100vh - 40px); /* Approx viewport height minus padding */
+        /* margin-right: 60px; */ /* Use gap */
+        /* margin-left: -40px; */ /* Use gap */
+        display: flex; /* Use flex */
+        flex-direction: column; /* Stack elements vertically */
+    }
+     /* Updated Chat Title */
+    .chat-sidebar h2 {
+        margin-bottom: 10px; /* Space below title */
+        text-align: center;
+    }
+
+
+    #chatWindow {
+        flex-grow: 1; /* Allow chat window to grow */
+        overflow-y: auto;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background: white;
+        padding: 10px;
+        text-align: left;
+    }
+
+    #chatWindow p {
+        margin: 8px 0;
+        padding: 8px;
+        border-radius: 4px;
+        word-wrap: break-word; /* Prevent long words overflowing */
+    }
+
+    #chatWindow p.system {
+        background: #f0f0f0;
+        color: #666;
+        font-style: italic;
+    }
+
+    #chatWindow p.assistant {
+        background: #e8f5e9;
+    }
+
+    #chatWindow p.user {
+        background: #e3f2fd;
+    }
+
+    .chat-input-container {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px; /* Keep margin */
+    }
+
+    #chatInput {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        /* width: auto; */ /* Use flex */
+    }
+    /* Ensure chat button matches others */
+    .chat-input-container button {
+         margin-top: 0;
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000; /* Ensure on top */
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.6); /* Darker background */
+        padding-top: 60px;
+    }
+    /* Use existing improved modal styles */
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 30px; /* Existing padding */
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 1200px; /* Existing max-width */
+        border-radius: 8px; /* Existing radius */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Existing shadow */
+    }
+    /* Added title style */
+     .modal-content h2 {
+        text-align: center;
+        margin-top: 0;
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    /* Stats Container/Button Styling */
+    .stats-container {
+        width: 100%; /* Take full width */
+        margin: 20px 0; /* Keep margin */
+        padding: 15px; /* Keep padding */
+        border-radius: 8px; /* Keep radius */
+        background: #f8f9fa; /* Keep background */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Keep shadow */
+        text-align: center; /* Keep center align */
+    }
+
+    .stats-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px; /* Keep gap */
+        padding: 12px 24px; /* Keep padding */
+        background: #4CAF50; /* Keep color */
+        color: white;
+        border: none;
+        border-radius: 6px; /* Keep radius */
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1em;
+        margin-top: 0; /* Remove top margin */
+    }
+
+    .stats-button:hover {
+        background: #45a049;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .stats-info {
+        font-size: 0.9em;
+        color: #666;
+        margin-top: 8px; /* Keep margin */
+    }
+
+    .stats-icon {
+        width: 20px;
+        height: 20px;
+    }
+     /* Style for description inside modal */
+    .stats-description {
+        color: #666;
+        line-height: 1.6;
+        margin: 15px 0;
+        text-align: center;
+    }
+
+     .confidence-indicator {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        margin-left: 10px;
+    }
+
+    .confidence-high {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .confidence-medium {
+        background-color: #FFA726; /* Orange */
+        color: white;
+    }
+
+    .confidence-low {
+        background-color: #EF5350; /* Red */
+        color: white;
+    }
+
+    .uncertainty-notes {
+        font-size: 0.9em;
+        color: #666;
+        margin-top: 8px; /* Increased space */
+        padding-left: 10px;
+        border-left: 3px solid #ddd;
+    }
+
+    /* Architectural Elements */
+    .architectural-elements {
+        margin-top: 30px; /* Adjusted margin */
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        width: 100%; /* Take full width */
+        border-top: 1px solid #eee; /* Separator */
+    }
+
+    .architectural-elements h2 {
+        text-align: center;
+        color: #4CAF50;
+        margin-bottom: 15px; /* Adjusted margin */
+    }
+     /* Added description */
+    .architectural-elements .section-description {
+         margin-bottom: 30px;
+    }
+
+
+    .elements-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        padding: 0 10px; /* Reduced padding */
+    }
+
+    .element-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+        display: flex; /* Use flex */
+        flex-direction: column; /* Stack items */
+    }
+     /* Style element title */
+     .element-card h3 {
+        text-align: center;
+        padding: 10px;
+        margin: 0;
+        background-color: #f0f0f0;
+        font-size: 1.1em;
+        color: #333;
+     }
+
+
+    .element-content {
+        padding: 15px;
+        flex-grow: 1; /* Allow content to grow */
+    }
+
+    .element-image {
+        width: 100%;
+        height: 200px;
+        overflow: hidden;
+        border-radius: 4px;
+        margin-bottom: 15px;
+    }
+
+    .element-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .similar-segments h4 {
+        color: #4CAF50;
+        margin: 15px 0 10px 0; /* Adjust margin */
+        font-size: 1em;
+    }
+
+    .similar-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* More responsive columns */
+        gap: 10px; /* Reduced gap */
+    }
+
+    .similar-item {
+        border-radius: 4px;
+        overflow: hidden;
+        background: #f5f5f5;
+        border: 1px solid #eee;
+    }
+
+    .segment-image {
+        height: 100px;
+        overflow: hidden;
+        display: block; /* Ensure no extra space */
+    }
+
+    .segment-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.2s;
+        display: block; /* Ensure no extra space */
+    }
+
+    .segment-image img:hover {
+        transform: scale(1.1);
+    }
+
+    .segment-info {
+        padding: 8px;
+        background: white;
+        font-size: 0.8em; /* Slightly smaller */
+    }
+
+    .segment-info span {
+        display: block;
+        line-height: 1.3; /* Adjusted */
+    }
+
+    .similarity-score {
+        color: #4CAF50;
+        font-weight: bold;
+    }
+
+    .country {
+        color: #666;
+    }
+
+     /* Navigation Button Styling */
+     .button-group { /* Use this class */
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        width: 100%;
+        text-align: center;
+     }
+
+    @media (max-width: 992px) { /* Adjust breakpoint for chat wrap */
+        .main-content-wrapper {
+            flex-direction: column;
+            align-items: center; /* Center items when stacked */
+        }
+        .left-content {
+            min-width: unset; /* Remove min-width */
+            width: 100%;
+            order: 1; /* Show content first on mobile */
+        }
+        .chat-sidebar {
+             position: relative; /* Change from sticky */
+             top: unset;
+             width: 100%; /* Full width */
+             max-width: 800px; /* Limit width */
+             height: 60vh; /* Set a height */
+             order: 2; /* Show chat second */
+             margin-top: 30px;
+        }
+    }
+     @media (max-width: 768px) {
+         .image-row {
+             flex-direction: column;
+             align-items: center;
+         }
+         .chart-container-wrapper {
+             margin-top: 20px; /* Add space */
+         }
+         .material-recognition {
+             flex-direction: column;
+             gap: 20px;
+         }
+         .material-table {
+             width: 80%; /* Wider table on mobile */
+         }
+         .elements-grid {
+             grid-template-columns: 1fr;
+         }
+         .similar-grid {
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust for smaller screens */
+         }
+     }
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+
+        <h1 class="main-title">Image Geo-location &amp; Material Analysis</h1>
+        <p class="intro-note">
+            This analysis uses advanced AI models to interpret the image content for location, materials, and architectural elements.
+        </p>
+
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+              Error processing image: {{ error }}
+            </div>
+             <div class="button-group">
+                 <a href="{{ url_for('main.upload_form') }}" class="button-link">Try Another Analysis</a>
+             </div>
+        {% else %}
+            <div class="main-content-wrapper">
+
+                <div class="left-content">
+
+                    <div class="image-row">
+                        <div class="image-container">
+                            <h2 class="image-title">Your Uploaded Image</h2>
+                            <img id="inputImage" src="{{ url_for('static', filename=image_path.replace('static/', '')) }}"
+                                 alt="Uploaded Image" class="resized-image">
+                        </div>
+                        <div class="image-container">
+                            <h2 class="image-title">Prediction Focus (Heatmap)</h2>
+                            <p class="section-description" style="margin-bottom: 5px;">Areas influencing the location prediction. Brighter means higher importance.</p>
+                            <img src="{{ url_for('static', filename=attention_map_path.replace('static/', '')) }}"
+                                 alt="Attention Map" class="resized-image">
+                        </div>
+                        <div class="chart-container-wrapper">
+                            <h2 class="image-title">Predicted Location</h2>
+                             <p class="section-description" style="margin-bottom: 5px;">Location estimates from our geo-location model.</p>
+                            <div class="chart-wrapper">
+                                <div class="chart-container">
+                                    <canvas id="continentChart"></canvas>
+                                </div>
+                                <div class="chart-center">
+                                    <h4>Top Country Guesses:</h4>
+                                    <ul>
+                                        {% for country, score in prediction_message.items() %}
+                                            <li><strong>{{ country }}</strong>: {{ score }}%</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <p class="score-explanation">Scores represent the model's confidence level.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if material_data %}
+                    <div class="material-section">
+                        <h2 class="material-title">Material Recognition</h2>
+                        <p class="section-description">Material identification performed by a separate analysis model.</p>
+
+                        <div class="material-recognition">
+                            <div class="material-image-container">
+                                <img src="{{ url_for('static', filename=material_data.mask_image_path.replace('/static/', '')) }}"
+                                     alt="Material Mask" class="resized-image">
+                                <small>Visual mask highlighting detected materials</small>
+                             </div>
+                            <table class="material-table">
+                                <thead>
+                                    <tr>
+                                        <th>Detected Materials</th>
+                                        <th>Proportion</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in material_data.image_materials.split('% ') %}
+                                    {% if item %}
+                                    {% set parts = item.split(' ') %}
+                                    {% set material = parts[0] %}
+                                    {% set proportion = parts[1].replace('%', '') %}
+                                    <tr>
+                                        <td>{{ material }}</td>
+                                        <td>{{ proportion }}%</td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="stats-container">
+                             <button class="stats-button" id="openModal">
+                                <svg class="stats-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 3v18h18"></path>
+                                    <path d="M18.4 7.5l-7.8 9L6 12"></path>
+                                </svg>
+                                View Global Material Stats
+                            </button>
+                            <p class="stats-info">
+                                Click to explore the distribution of interior materials across different countries.
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                     {% if segmentation_results %}
+                     <div class="architectural-elements">
+                         <h2>Architectural Elements Analysis</h2>
+                         <p class="section-description">Identifies distinct architectural styles and finds visually similar examples from different countries.</p>
+                         <div class="elements-grid">
+                             {% for element_type, data in segmentation_results.items() %}
+                             <div class="element-card">
+                                 <h3>{{ element_type | title }}</h3>
+                                 <div class="element-content">
+                                     <div class="element-image">
+                                         <img src="{{ url_for('static', filename=data.cropped_image_path.replace('static/', '')) }}"
+                                              alt="{{ element_type }}" class="segmented-image">
+                                     </div>
+                                     {% if data.get('similar_segments_info') %}
+                                     <div class="similar-segments">
+                                         <h4>Similar Segments Found</h4>
+                                         <div class="similar-grid">
+                                             {% for segment in data.similar_segments_info %}
+                                             <div class="similar-item">
+                                                 <div class="segment-image">
+                                                     <img src="{{ url_for('main.serve_segmentations', filename=segment.path) }}"
+                                                          alt="Similar {{ element_type }}">
+                                                 </div>
+                                                 <div class="segment-info">
+                                                     <span class="similarity-score">Score: {{ "%.2f"|format(segment.score|float) }}</span>
+                                                     <span class="country">{{ segment.country }}</span>
+                                                 </div>
+                                             </div>
+                                             {% endfor %}
+                                         </div>
+                                     </div>
+                                     {% else %}
+                                      <p style="text-align: center; color: #888; font-size: 0.9em;">No similar segments found.</p>
+                                     {% endif %}
+                                 </div>
+                             </div>
+                             {% endfor %}
+                         </div>
+                     </div>
+                     {% endif %}
+
+                </div> <div class="chat-sidebar">
+                     <h2>Geo-location Assistant</h2>
+                    <div id="chatWindow">
+                        {% if initial_chat %}
+                            {% for message in initial_chat %}
+                                {% if message.role == "system" %}
+                                    {% else %}
+                                    <div class="assistant-message">
+                                        <p class="assistant">
+                                            <strong>LLaVA:</strong>
+                                            {% set confidence = message.content.confidence_level | default('Medium') %}
+                                            <span class="confidence-indicator confidence-{{ confidence|lower }}">
+                                                {% if confidence == "High" %}🟢
+                                                {% elif confidence == "Medium" %}🟡
+                                                {% else %}🔴{% endif %}
+                                                {{ confidence }} Confidence
+                                            </span>
+                                            <br>{{ message.content.response | default('No response content.') }}
+                                            {% if message.content.uncertainty %}
+                                                <div class="uncertainty-notes">Note: {{ message.content.uncertainty }}</div>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chatInput" placeholder="Ask about the analysis...">
+                        <button onclick="sendMessage()">Send</button>
+                    </div>
+                </div> </div> <div id="myModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                     <h2>Global Interior Material Distribution</h2>
+                    <p class="stats-description">
+                        This visualization shows how different interior materials are distributed across countries,
+                        helping understand regional preferences and design patterns.
+                    </p>
+                    <img src="/static/material_per_country.png" alt="Material per Country" style="width:100%; display: block; margin-top: 15px;">
+                </div>
+            </div>
+
+
+            <div class="button-group">
+                 <a href="{{ url_for('main.upload_form') }}" class="button-link">New Analysis</a>
+                </div>
+
+        {% endif %} </div> <script>
+        // Chart.js Script (Modified title, added label)
+        var continentData = {{ continent_percentages | default({}) | tojson | safe }}; // Added default
+        var ctx = document.getElementById('continentChart').getContext('2d');
+        var continentChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(continentData),
+                datasets: [{
+                    label: 'Continent Confidence', // Added label
+                    data: Object.values(continentData),
+                    backgroundColor: [ // Distinct colors
+                        'rgba(54, 162, 235, 0.6)', // Blue
+                        'rgba(255, 206, 86, 0.6)', // Yellow
+                        'rgba(75, 192, 192, 0.6)', // Teal
+                        'rgba(153, 102, 255, 0.6)', // Purple
+                        'rgba(255, 159, 64, 0.6)', // Orange
+                        'rgba(255, 99, 132, 0.6)'  // Red
+                    ],
+                    borderColor: [ // Matching borders
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Continent Prediction Confidence', // Changed text
+                        font: {
+                            size: 16, // Adjusted size
+                            weight: 'bold'
+                        }
+                    },
+                     tooltip: { // Improved tooltip
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed !== null) {
+                                    label += context.parsed.toFixed(1) + '%'; // One decimal place
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                cutout: '50%', // Adjust this to control the size of the inner circle
+                animation: {
+                    duration: 1000,
+                    easing: 'easeInOutBounce'
+                }
+                // Removed scales option for y-axis as it's not applicable to doughnut charts
+            }
+        });
+
+    </script>
+
+    <script>
+        // Ensure elements exist before adding listeners
+        var modal = document.getElementById("myModal");
+        var btn = document.getElementById("openModal");
+        var span = document.getElementsByClassName("close")[0];
+
+        if (btn) {
+            btn.onclick = function() {
+                if(modal) modal.style.display = "block";
+            }
+        }
+
+        if (span) {
+            span.onclick = function() {
+                if(modal) modal.style.display = "none";
+            }
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                if(modal) modal.style.display = "none";
+            }
+        }
+    </script>
+
+    <script>
+        function initializeChat() {
+            var chatWindow = document.getElementById('chatWindow');
+            if (chatWindow) { // Check if element exists
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+        }
+
+        function sendMessage() {
+            var chatInput = document.getElementById('chatInput');
+            if (!chatInput) return; // Safety check
+
+            var message = chatInput.value;
+            if (!message.trim()) return;
+
+            chatInput.value = ''; // Clear input
+            displayMessage("You", message); // Display user message immediately
+
+            // Use try-catch for fetch robustness
+            try {
+                fetch('/send_message', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    // Ensure image_path is correctly passed if needed, add default ''
+                    body: JSON.stringify({
+                        message: message,
+                        image_path: "{{ image_path | default('') | e }}"
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) { // Check for HTTP errors
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Received data:", data); // Debugging
+                    if (data.reply) {
+                        // Pass the structured reply object directly
+                         displayMessage("LLaVA", data.reply);
+                    } else {
+                         console.warn("Received empty reply data.");
+                         displayMessage("System", "Received an empty response from the assistant.");
+                    }
+                })
+                .catch(error => { // Catch fetch or JSON parsing errors
+                    console.error('Error fetching or parsing response:', error);
+                    displayMessage("System", `Sorry, failed to get response: ${error.message}`);
+                });
+            } catch (error) {
+                 console.error('Error initiating fetch:', error);
+                 displayMessage("System", `Sorry, there was an error sending your message: ${error.message}`);
+            }
+        }
+
+        function displayMessage(role, content) {
+            var chatWindow = document.getElementById('chatWindow');
+            if (!chatWindow) return; // Safety check
+
+            var messageElem = document.createElement('div');
+            // Use CSS classes for styling based on role
+            messageElem.classList.add(role.toLowerCase() + '-message');
+
+            let htmlContent = '';
+            if (role === "LLaVA") {
+                 // Check if content is the structured object or just a string
+                let responseText = (typeof content === 'object' && content.response) ? content.response : (typeof content === 'string' ? content : "Received invalid assistant message format.");
+                let confidence = (typeof content === 'object' && content.confidence_level) ? content.confidence_level : "Medium"; // Default confidence
+                let notes = (typeof content === 'object' && content.uncertainty) ? content.uncertainty : "";
+
+                let confidenceEmoji = confidence.toLowerCase() === "high" ? "🟢" :
+                                    confidence.toLowerCase() === "medium" ? "🟡" : "🔴";
+
+                htmlContent = `
+                    <p class="assistant">
+                        <strong>Geo-location Assistant:</strong>
+                        <span class="confidence-indicator confidence-${confidence.toLowerCase()}">
+                            ${confidenceEmoji} ${confidence} Confidence
+                        </span>
+                        <br>${responseText}
+                        ${notes ? `<div class="uncertainty-notes">Note: ${notes}</div>` : ''}
+                    </p>`;
+            } else if (role === "System") {
+                htmlContent = `<p class="system"><strong>${role}:</strong> ${content}</p>`;
+            } else { // User
+                htmlContent = `<p class="user"><strong>${role}:</strong> ${content}</p>`;
+            }
+
+            messageElem.innerHTML = htmlContent;
+            chatWindow.appendChild(messageElem);
+            // Scroll to bottom smoothly
+            chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
+        }
+
+        // Handle Enter key press
+        var chatInputElem = document.getElementById('chatInput');
+        if (chatInputElem) {
+            chatInputElem.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); // Prevent default form submission/newline
+                    sendMessage();
+                }
+            });
+        }
+
+        // Initialize chat when page loads (ensure it runs after elements are ready)
+        document.addEventListener('DOMContentLoaded', function() {
+             // Check if we are on the results page (not error page)
+             {% if not error %}
+             initializeChat();
+             {% endif %}
+        });
+    </script>
+</body>
+</html>

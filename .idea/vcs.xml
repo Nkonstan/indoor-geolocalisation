@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/clip-vit-large-patch14-336" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deit-base-distilled-patch16-384" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/grounding-dino-base" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/llava-v1.6-mistral-7b" vcs="Git" />
+  </component>
+</project>

@@ -1,0 +1,35 @@
+airbnb_14countries_train_database_128bits_0.6296825813840561/
+clip-vit-large-patch14-336/
+deit-base-distilled-patch16-384/
+DHN_airbnb_14countries_512bits_0.3558918258844033/
+grounding-dino-base/
+llava-v1.6-mistral-7b/
+sam-checkpoints/
+save_binarycodes_paths_labels_new/
+segmentations/
+static/
+sam_vit_h_4b8939.pth
+segmentation_features_dhn.csv
+
+# Ignore common large file types
+*.pth
+*.pt
+*.weights
+*.onnx
+*.h5
+*.bin
+*.model
+*.csv
+*.zip
+*.tar.gz
+
+# Python stuff
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/

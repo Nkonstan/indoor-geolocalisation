@@ -1,0 +1,11 @@
+transformers
+flask
+Pillow
+opencv-python
+matplotlib
+numpy
+pandas
+scipy
+roboflow
+pymongo==4.6.1
+faiss-gpu
