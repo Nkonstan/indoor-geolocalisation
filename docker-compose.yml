@@ -58,8 +58,10 @@ services:
       - ./static:/app/static
       - ./segmentations:/app/segmentations
     working_dir: /app
-    expose:
-      - 5000  # Keep this as it's the main API endpoint
+    ports:
+      - "5006:5000"
+#    expose:
+#      - 5000  # Keep this as it's the main API endpoint
     command: ["python3", "-u", "./run.py"]
     depends_on:
       mongodb_migration:
@@ -92,6 +94,8 @@ services:
     volumes:
       - ./MATERobot:/app/MATERobot
       - ./static:/app/static
+      - ./average_material_scores_per_country.csv:/app/average_material_scores_per_country.csv
+
     working_dir: /app/MATERobot
     # Remove external port mapping
     command: ["conda", "run", "-n", "materobot_env", "python3", "-u", "materobot_app.py"]

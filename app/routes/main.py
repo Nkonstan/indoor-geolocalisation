@@ -95,6 +95,56 @@ def serve_segmentations(filename):
     logger.info(f"Serving file: {file_name} from directory: {full_dir}")
     return send_from_directory(full_dir, file_name)
 
+
+@main_bp.route('/predict/top', methods=['POST'])
+def predict_image_top():
+    timer = ProcessTimer()
+    try:
+        with timer.time_process("Top Prediction Request"):
+            # Initial setup
+            file = request.files['image']
+            if not file:
+                return jsonify({'error': 'No file provided'}), 400
+            # Clear memory before processing
+            gc.collect()
+            torch.cuda.empty_cache()
+            # Process image to get predictions
+            result = image_service.process_image(file)
+            # Get predictions dictionary
+            predictions = result['prediction_message']
+            if isinstance(predictions, str):
+                predictions = json.loads(predictions)
+            # Find the top country prediction
+            top_country = None
+            top_score = -1
+            for country, score in predictions.items():
+                # Convert score to float (handling percentage strings)
+                score_value = float(str(score).replace('%', ''))
+                if score_value > top_score:
+                    top_score = score_value
+                    top_country = country
+            # Clean up
+            gc.collect()
+            torch.cuda.empty_cache()
+            # Return the top prediction AND all predictions
+            return jsonify({
+                'status': 'success',
+                'top_prediction': {
+                    'country': top_country,
+                    'score': predictions[top_country]
+                },
+                'all_predictions': predictions,
+                'timing': timer.timings.get('Top Prediction Request', 0)
+            })
+    except Exception as e:
+        logger.error(f"Error getting top prediction: {str(e)}")
+        gc.collect()
+        torch.cuda.empty_cache()
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
 @main_bp.route('/process', methods=['POST'])
 def process_image():
     timer = ProcessTimer()
@@ -118,20 +168,57 @@ def process_image():
                 gc.collect()
                 torch.cuda.empty_cache()
 
-            # In the segmentation processing section, after you've processed the segmentation results
+            # # In the segmentation processing section, after you've processed the segmentation results
+            # with timer.time_process("Segmentation Processing"):
+            #     log_memory_usage("Before segmentation")
+            #     segmentation_results = image_service.process_automatic_segmentation(result['image_path'])
+            #
+            #     # Define the reference data path as it exists in the container
+            #     reference_data_path = "/app/segmentations"  # Adjust this to the actual mount point in your container
+            #
+            #     logger.info(f"Using reference data path: {reference_data_path}")
+            #     logger.info(f"Path exists: {os.path.exists(reference_data_path)}")
+            #     # Call the helper function to encode all images to base64
+            #     attention_map_base64, material_mask_base64, segmentation_results = image_service.encode_images_to_base64(
+            #         result, segmentation_results, reference_data_path
+            # )
+
+            # Define the reference data path as it exists in the container
+            reference_data_path = "/app/segmentations"  # Adjust this to the actual mount point in your container
+
             with timer.time_process("Segmentation Processing"):
                 log_memory_usage("Before segmentation")
-                segmentation_results = image_service.process_automatic_segmentation(result['image_path'])
 
-                # Define the reference data path as it exists in the container
-                reference_data_path = "/app/segmentations"  # Adjust this to the actual mount point in your container
+                # Get predictions
+                predictions = result['prediction_message'] if isinstance(result['prediction_message'],
+                                                                         dict) else json.loads(
+                    result['prediction_message'])
+
+                # Find the top country efficiently
+                top_country = None
+                top_score = -1
+
+                for country, score in predictions.items():
+                    score_value = float(str(score).replace('%', ''))
+                    if score_value > top_score:
+                        top_score = score_value
+                        top_country = country
+
+                # Skip segmentation if top country is Portugal
+                if top_country == 'Portugal':
+                    logger.info(
+                        f"Portugal detected as top country with {predictions['Portugal']}% - skipping segmentation")
+                    segmentation_results = {}
+                else:
+                    segmentation_results = image_service.process_automatic_segmentation(result['image_path'])
 
                 logger.info(f"Using reference data path: {reference_data_path}")
                 logger.info(f"Path exists: {os.path.exists(reference_data_path)}")
+
                 # Call the helper function to encode all images to base64
                 attention_map_base64, material_mask_base64, segmentation_results = image_service.encode_images_to_base64(
                     result, segmentation_results, reference_data_path
-            )
+                )
 
             with timer.time_process("Result Formatting"):
                 # NEW: Process segmentation results
@@ -169,6 +256,14 @@ def process_image():
                 ])
                 materials_list = result['material_data']['image_materials'].split('%')
                 materials_text = ", ".join([mat.strip() + '%' for mat in materials_list if mat.strip()])
+
+                # Add material country matches
+                material_country_text = ""
+                if 'material_country_matches' in result['material_data']:
+                    matches = result['material_data']['material_country_matches']
+                    material_country_text = "\n\n   MATERIAL COUNTRY MATCHES:"
+                    for material, match_info in matches.items():
+                        material_country_text += f"\n   {material}: {match_info['country']} ({match_info['country_value']}%)"
 
                 system_context = f"""Image Analysis Results:
                 1. Location Analysis:
@@ -245,7 +340,7 @@ def process_image():
                     'system_context': system_context,
                     'llava_analysis': parsed_response,
                     'segmentation_results': segmentation_results,
-                    'timing_summary': timer.timings
+                    # 'timing_summary': timer.timings
                 })
             # For web interface
             return render_template(

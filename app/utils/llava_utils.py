@@ -173,41 +173,137 @@ class PromptGenerator:
     @staticmethod
     def get_traffic_sign_prompt(country):
         """
-        Generate a specialized prompt for traffic sign analysis.
-
-        Args:
-            country (str): The country to consider in the analysis
-
-        Returns:
-            tuple: (system_context, user_message)
+        Generate specialized traffic sign prompt with enhanced context
         """
-        system_context = "You are an expert in traffic signs analysis."
-        user_message = f"""This is a traffic sign possibly from {country} as detected by AI algorithms. Analyze it with extreme precision.
+        system_context = "You are an expert in European traffic signs analysis."
 
-        ⚠️ CRITICAL WARNING ⚠️
-        Text hallucination is strictly prohibited. DO NOT report seeing ANY text unless you can verify each individual character with 100% certainty.
+        user_message = f"""Analyze this traffic sign to determine if it aligns with {country}'s signage.
 
-        MANDATORY INSTRUCTIONS:
-        1. TEXT VERIFICATION PROTOCOL: Before claiming ANY text exists:
-           - Verify each character individually
-           - If even a single character is uncertain, you MUST state "Text may be present but cannot be reliably transcribed"
-           - NEVER attempt to guess words or complete partial text
-           - NEVER translate text unless you are absolutely certain of both the characters and their meaning
+        **Domain Knowledge (MUST CONSIDER):**
+        - Vienna Convention standards: 
+          • Warning: Red-bordered triangles
+          • Prohibitory: Red-bordered circles
+          • Mandatory: Blue circles
+        - Primary differentiators: Language text > symbols > color shades
 
-        2. VISUAL DESCRIPTION ONLY:
-           - Describe ONLY colors, shapes, borders, and symbols that are unambiguously visible
-           - Use precise color terminology (e.g., "cobalt blue" rather than just "blue")
-           - For symbols, describe their exact shape without interpretation unless absolutely certain
+        **Country-Specific Context for {country}:**
+        {PromptGenerator._get_country_context(country)}
 
-        3. CERTAINTY INDICATORS:
-           - For each element described, indicate certainty level: "Clearly visible:", "Partially visible:", or "Suggested but unclear:"
-           - Do not include any element in your analysis without these indicators
+        **Analysis Protocol:**
+        1. Text Analysis (IF PRESENT):
+           - Language: Verify characters match {country}'s official language(s)
+           - Font: Note distinctive national font characteristics
+        2. Visual Elements:
+           • Shape: Compare to Vienna Convention standards
+           • Colors: Use precise terminology (e.g., Pantone 485C red)
+           • Symbols: Describe EXACTLY without interpretation
+        3. Unique {country} Features Check
 
-        FINAL VERIFICATION: Before submitting, review your response and remove ANY text or symbol descriptions that aren't 100% verifiable in the image.
-
-        Based EXCLUSIVELY on verifiable visual elements, assess whether this sign's characteristics align with traffic signage from {country}."""
+        **Absolute Restrictions:**
+        - NO text interpretation unless 100% character certainty
+        - NO symbol guessing - describe only visible elements"""
 
         return system_context, user_message
+
+    @staticmethod
+    def _get_country_context(country):
+        """
+        Return country-specific traffic sign context for geolocation, focusing on visual/textual clues.
+        """
+        country = country.strip().lower()
+        if country in ["netherlands", "amsterdam"]:
+            return (
+                "• Language: Dutch (e.g., 'Fietspad', 'Uitgezonderd', 'Gracht')\n"
+                "• Unique: Canal warning triangles (often with pictograms of cars falling into water), "
+                "and blue rectangular 'Fietsstraat' (bicycle street) signs\n"
+                "• Font: ANWB/Rijkswaterstaat typeface, squared '0'\n"
+                "• Speed limits: Standard circular red-bordered signs, Dutch text possible\n"
+                "• Regulatory framework: RVV 1990[3][7]"
+            )
+        elif country in ["greece", "athens"]:
+            return (
+                "• Language: Greek (Greek alphabet), sometimes bilingual with English\n"
+                "• Unique: Yellow-background warning triangles (red border, black pictogram), "
+                "realistic human silhouettes, orange backgrounds for temporary signs\n"
+                "• Font: Transport (since 1974), DIN 1451 on motorways\n"
+                "• Most signs follow Vienna Convention shapes and colors\n"
+                "• Night: Highly reflective or illuminated signs[4]"
+            )
+        elif country in ["germany", "berlin"]:
+            return (
+                "• Language: German (e.g., 'Umweltzone', 'Anlieger frei', 'Baustelle')\n"
+                "• Unique: Umweltzone (environmental zone) discs, brown historical route markers (esp. Berlin Wall), "
+                "'Snow chains required' blue circle, minimum following distance, detailed parking/no waiting signs\n"
+                "• Font: DIN 1451\n"
+                "• Color: RAL 3020 red for borders\n"
+                "• Regulatory: Vienna Convention[5]"
+            )
+        elif country in ["hungary", "budapest"]:
+            return (
+                "• Language: Hungarian (e.g., 'Utca', 'Tér', 'Behajtani tilos', 'Vigyázz')\n"
+                "• Unique: Modern navigation signs (since 2025), sometimes multilingual at major hubs\n"
+                "• Font: Hungarian road sign font, similar to DIN\n"
+                "• Bridge and hill warnings common, Danube bridges often named\n"
+                "• Regulatory: Vienna Convention"
+            )
+        elif country in ["finland", "helsinki"]:
+            return (
+                "• Language: Bilingual Finnish/Swedish (e.g., 'Keskusta / Centrum', 'Varoitus / Varning')\n"
+                "• Unique: Snow/ice warnings, ferry/harbor/tram signs, winter route markers\n"
+                "• Font: Finnish road sign font\n"
+                "• Regulatory: Vienna Convention"
+            )
+        elif country in ["united kingdom", "uk", "london"]:
+            return (
+                "• Language: English\n"
+                "• Unique: Congestion charge zone (red circle, white 'C'), left-side driving arrows, "
+                "distinct roundabout and 'Give Way' signs\n"
+                "• Font: Transport\n"
+                "• Regulatory: Not Vienna Convention; UK-specific shapes and priorities"
+            )
+        elif country in ["russia", "moscow"]:
+            return (
+                "• Language: Russian (Cyrillic alphabet)\n"
+                "• Unique: Moscow Metro 'M' logo, Cyrillic on all signs, winter and lane management signs\n"
+                "• Font: Russian road sign font\n"
+                "• Color: Slightly different reds/blues than Western Europe\n"
+                "• Regulatory: GOST standards (not Vienna Convention)"
+            )
+        elif country in ["france", "paris"]:
+            return (
+                "• Language: French (e.g., 'Rue', 'Boulevard', 'Interdit', 'Zone piétonne')\n"
+                "• Unique: Boulevard Périphérique (green/blue signs with 'Périphérique'), "
+                "historic district blue/brown markers, roundabouts common (triangular sign with circular arrows)\n"
+                "• Font: Caractères\n"
+                "• Regulatory: Vienna Convention, priority to the right unless otherwise posted[6]"
+            )
+        elif country in ["sweden", "stockholm"]:
+            return (
+                "• Language: Swedish (e.g., 'Gata', 'Väg', 'Miljözon', 'Färja')\n"
+                "• Unique: Miljözon (environmental zone) markers, ferry/island access, winter warnings\n"
+                "• Font: Swedish road sign font\n"
+                "• Regulatory: Vienna Convention"
+            )
+        elif country in ["norway", "trondheim"]:
+            return (
+                "• Language: Norwegian (e.g., 'Gate', 'Vei', 'Farlig sving', 'Kollektivfelt')\n"
+                "• Unique: Bicycle elevator (Trampe) signage, fjord proximity, climate/winter route signs\n"
+                "• Font: Norwegian road sign font\n"
+                "• Regulatory: Vienna Convention"
+            )
+        elif country in ["switzerland", "zurich"]:
+            return (
+                "• Language: Primarily German, sometimes French/Italian (e.g., 'Ausfahrt / Sortie / Uscita')\n"
+                "• Unique: Multilingual on one sign, altitude/gradient, tram and lake proximity ('Zürichsee')\n"
+                "• Font: Swiss road sign font\n"
+                "• Regulatory: Vienna Convention"
+            )
+        else:
+            return (
+                "• Primary Identifier: Language on sign\n"
+                "• Check for country-specific pictograms, fonts, or colors\n"
+                "• Most European countries follow Vienna Convention standards"
+            )
 
     @staticmethod
     def get_license_plate_prompt(country):

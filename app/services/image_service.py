@@ -215,7 +215,7 @@ class ImageService:
         """Get material recognition data from material service."""
         try:
             response = requests.post(
-                'http://materobot:5001/material_recognition',
+                'http://mca-g-materobot:5001/material_recognition',
                 json={'image_path': image_path}
             )
             response.raise_for_status()
