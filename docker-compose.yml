@@ -98,7 +98,7 @@ services:
 
     working_dir: /app/MATERobot
     # Remove external port mapping
-    command: ["conda", "run", "-n", "materobot_env", "python3", "-u", "materobot_app.py"]
+    command: ["conda", "run", "-n", "materobot_env", "--no-capture-output", "python3", "-u", "materobot_app.py"]
 
   langsam:
     build:
@@ -145,22 +145,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
-
-#  mongo-express:
-#    image: mongo-express:latest
-#    container_name: vanguard-certh-mcag-mongo-express
-#    restart: always
-#    # Port mapping removed as requested
-#    environment:
-#      - ME_CONFIG_MONGODB_SERVER=mongodb
-#      - ME_CONFIG_MONGODB_PORT=27017
-#      - ME_CONFIG_BASICAUTH_USERNAME=admin
-#      - ME_CONFIG_BASICAUTH_PASSWORD=admin123
-#    depends_on:
-#      mongodb:
-#        condition: service_healthy
-#    networks:
-#      - app_network
 
 volumes:
   mongodb_data:

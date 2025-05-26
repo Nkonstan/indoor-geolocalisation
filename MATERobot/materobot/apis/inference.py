@@ -18,6 +18,8 @@ from mmseg.structures import SegDataSample
 from mmseg.utils import SampleList, dataset_aliases, get_classes, get_palette
 from mmseg.visualization import SegLocalVisualizer
 
+_pipeline_cache = {}
+
 
 def init_model(config: Union[str, Path, Config],
                checkpoint: Optional[str] = None,
@@ -90,8 +92,42 @@ def init_model(config: Union[str, Path, Config],
 ImageType = Union[str, np.ndarray, Sequence[str], Sequence[np.ndarray]]
 
 
-def _preprare_data(imgs: ImageType, model: BaseSegmentor):
 
+
+
+# def _preprare_data(imgs: ImageType, model: BaseSegmentor):
+#     cfg = model.cfg
+#     if dict(type='LoadAnnotations') in cfg.test_pipeline:
+#         cfg.test_pipeline.remove(dict(type='LoadAnnotations'))
+
+#     is_batch = True
+#     if not isinstance(imgs, (list, tuple)):
+#         imgs = [imgs]
+#         is_batch = False
+
+#     if isinstance(imgs[0], np.ndarray):
+#         cfg.test_pipeline[0]['type'] = 'LoadImageFromNDArray'
+
+#     # CRITICAL FIX: Use cached pipeline instead of creating new one
+#     pipeline_key = str(cfg.test_pipeline)
+#     if pipeline_key not in _pipeline_cache:
+#         _pipeline_cache[pipeline_key] = Compose(cfg.test_pipeline)
+#     pipeline = _pipeline_cache[pipeline_key]
+
+#     data = defaultdict(list)
+#     for img in imgs:
+#         if isinstance(img, np.ndarray):
+#             data_ = dict(img=img)
+#         else:
+#             data_ = dict(img_path=img)
+#         data_ = pipeline(data_)
+#         data['inputs'].append(data_['inputs'])
+#         data['data_samples'].append(data_['data_samples'])
+
+#     return data, is_batch
+
+
+def _preprare_data(imgs: ImageType, model: BaseSegmentor):
     cfg = model.cfg
     if dict(type='LoadAnnotations') in cfg.test_pipeline:
         cfg.test_pipeline.remove(dict(type='LoadAnnotations'))
@@ -104,9 +140,14 @@ def _preprare_data(imgs: ImageType, model: BaseSegmentor):
     if isinstance(imgs[0], np.ndarray):
         cfg.test_pipeline[0]['type'] = 'LoadImageFromNDArray'
 
-    # TODO: Consider using the singleton pattern to avoid building
-    # a pipeline for each inference
-    pipeline = Compose(cfg.test_pipeline)
+    # CRITICAL FIX: Use cached pipeline instead of creating new one
+    pipeline_key = str(cfg.test_pipeline)
+    if pipeline_key not in _pipeline_cache:
+        print(f"[PERFORMANCE] Creating new pipeline - FIRST TIME ONLY")
+        _pipeline_cache[pipeline_key] = Compose(cfg.test_pipeline)
+    else:
+        print(f"[PERFORMANCE] Using cached pipeline - FAST PATH")
+    pipeline = _pipeline_cache[pipeline_key]
 
     data = defaultdict(list)
     for img in imgs:
@@ -119,31 +160,7 @@ def _preprare_data(imgs: ImageType, model: BaseSegmentor):
         data['data_samples'].append(data_['data_samples'])
 
     return data, is_batch
-
-
-# def inference_moe_model(model: BaseSegmentor,
-#                     img: ImageType) -> Union[SegDataSample, SampleList]:
-#     """Inference image(s) with the segmentor.
-#
-#     Args:
-#         model (nn.Module): The loaded segmentor.
-#         imgs (str/ndarray or list[str/ndarray]): Either image files or loaded
-#             images.
-#
-#     Returns:
-#         :obj:`SegDataSample` or list[:obj:`SegDataSample`]:
-#         If imgs is a list or tuple, the same length list type results
-#         will be returned, otherwise return the segmentation results directly.
-#     """
-#     # prepare data
-#     data, is_batch = _preprare_data(img, model)
-#
-#     # forward the model
-#     with torch.no_grad():
-#         results = model.test_step(data)
-#
-#     # return results if is_batch else results[0]
-#     return results if is_batch else results[0][0], results[1][0]
+    
 
 def inference_moe_model(model: BaseSegmentor,
                         img: ImageType) -> Union[SegDataSample, SampleList]:

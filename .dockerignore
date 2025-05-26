@@ -8,4 +8,9 @@ grounding-dino-base/
 sam2.1_hiera_small.pt/
 save_binarycodes_paths_labels_new/
 static/
-segmentation_features_dhn.csv/
+
+
+segmentation_features_dhn.csv
+sam-checkpoint/ 
+filter_env/
+.git/

@@ -39,7 +39,7 @@ class ModelService:
         self._llava_model = None
         self._tokenizer = None
         self._image_processor = None
-        self.current_model = None
+        # self.current_model = None
         self.model_name = None
         self.transform = self._create_transform()
         # self.mongo_client = MongoClient(self.config.MONGODB_URI)
@@ -68,209 +68,77 @@ class ModelService:
         self._initialize_models()
 
     def _initialize_models(self):
-        """Fully functional initialization with memory management"""
+        """Load all models on GPU and keep them there"""
         try:
-            # Load state dictionaries with memory management first
-            logger.info("Loading model states...")
+            logger.info("Loading all models on GPU...")
             with gpu_memory_manager():
-                # Load state dicts to CPU
+                # Load state dicts to CPU first, then move models to GPU
                 self.state_dicts['geo'] = torch.load(self.config.GEO_MODEL_PATH, map_location='cpu')
                 self.state_dicts['dhn'] = torch.load(self.config.DHN_MODEL_PATH, map_location='cpu')
 
-                # Verify state dicts are loaded
-                for model_type, state_dict in self.state_dicts.items():
-                    if state_dict is None:
-                        raise ValueError(f"Failed to load state dict for {model_type}")
-                    logger.info(f"Successfully loaded state dict for {model_type}")
-
-                # # Keep backward compatibility
-                # self.geo_state = self.state_dicts['geo']
-                # self.dhn_state = self.state_dicts['dhn']
-
-            # Initialize models and load their weights on CPU first
-            logger.info("Initializing models on CPU...")
-            try:
-                # Initialize DeiT base model once if not initialized
+                # Initialize DeiT base on GPU
                 if self._deit_base is None:
                     from transformers import DeiTModel
-                    logger.info("Initializing DeiT base model...")
+                    logger.info("Initializing DeiT base model on GPU...")
                     self._deit_base = DeiTModel.from_pretrained(
-                        '/app/deit-base-distilled-patch16-384',  # local path inside the container
+                        '/app/deit-base-distilled-patch16-384',
                         ignore_mismatched_sizes=True,
                         output_attentions=True
                     )
-                    # self._deit_base = DeiTModel.from_pretrained(
-                    #     'facebook/deit-base-distilled-patch16-384',
-                    #     ignore_mismatched_sizes=True,
-                    #     output_attentions=True
-                    # )
                     self._deit_base.eval()
-                    self._deit_base.cpu()
-                    logger.info("DeiT base model initialized successfully")
+                    self._deit_base.to(self.device)  # Keep on GPU
 
-                # Create model instances (removed hashnet)
+                # Create and load geo model on GPU
                 self.models['geo'] = DeiT384_exp(128, base_model=self._deit_base)
-                # self.models['dhn'] = ResNet(512)
-                self.models['dhn'] = ResNet(512, use_pretrained=False)
-                # Verify models are created
-                for model_type, model in self.models.items():
-                    if model is None:
-                        raise ValueError(f"Failed to create {model_type} model")
-                    logger.info(f"Successfully created {model_type} model architecture")
+                self.models['geo'].load_state_dict(self.state_dicts['geo'])
+                self.models['geo'].eval()
+                self.models['geo'].to(self.device)  # Keep on GPU
 
-                # Set traditional references first (keep on CPU)
+                # Create and load dhn model on GPU
+                self.models['dhn'] = ResNet(512, use_pretrained=False)
+                self.models['dhn'].load_state_dict(self.state_dicts['dhn'])
+                self.models['dhn'].eval()
+                self.models['dhn'].to(self.device)  # Keep on GPU
+
+                # Set references
                 self.net = self.models['geo']
                 self.net_dhn = self.models['dhn']
 
-                # Load states with memory management
-                with gpu_memory_manager():
-                    for model_type in self.models:
-                        logger.info(f"Loading state dict for {model_type} model")
-                        self.models[model_type].load_state_dict(self.state_dicts[model_type])
-                        self.models[model_type].eval()
-                        self.models[model_type].cpu()  # Ensure on CPU
-                        logger.info(f"Successfully initialized {model_type} model")
+                # Load LLaVA model and keep on GPU
+                logger.info("Loading LLaVA model on GPU...")
+                self.model_name = get_model_name_from_path(self.config.MODEL_PATH)
+                self._load_llava_model()
 
-                # Verify models are properly loaded
-                for model_type in self.models:
-                    if not hasattr(self.models[model_type], 'state_dict'):
-                        raise ValueError(f"Model {model_type} not properly initialized")
-                    logger.info(f"Verified {model_type} model initialization")
-
-            except Exception as e:
-                logger.error(f"Error initializing models: {str(e)}")
-                # Clear any partially initialized models
-                self.models = {k: None for k in self.models}
-                self.net = None
-                self.net_dhn = None
-                raise
-
-            # Verify final model states
-            logger.info("Verifying final model states...")
-            if self.net is None or self.net_dhn is None:
-                raise ValueError("One or more model references are None after initialization")
-
-            if self.models['geo'] is None or self.models['dhn'] is None:
-                raise ValueError("One or more models dict entries are None after initialization")
-
-            # Initialize LLAVA model after other models are set up
-            logger.info("Loading LLAVA model...")
-            self.model_name = get_model_name_from_path(self.config.MODEL_PATH)
-            self._load_llava_model()
-
-            # # MongoDB initialization
-            # logger.info("Loading segmentation databases from MongoDB...")
-            # self._initialize_mongodb_data()
-
-            logger.info("All models loaded successfully")
-            logger.info(f"Model states: geo={self.net is not None}, dhn={self.net_dhn is not None}")
+                logger.info("All models loaded and kept on GPU")
 
         except Exception as e:
             logger.error(f"Model initialization failed: {str(e)}")
             raise
 
+    def _unload_current_model(self):
+        """Simplified cleanup - just clear GPU cache"""
+        try:
+            torch.cuda.synchronize()
+            torch.cuda.empty_cache()
+            gc.collect()
+        except Exception as e:
+            logger.error(f"Error in cleanup: {e}")
 
     def switch_model(self, model_type):
-        """Enhanced model switching with proper device management"""
-        try:
-            # Validate model type
-            if model_type not in self.models:
-                raise ValueError(f"Invalid model type: {model_type}")
-
-            # Skip if same model
-            if self.current_model == model_type:
-                return
-
-            logger.info(f"Switching to model {model_type}. Current model: {self.current_model}")
-            logger.info(f"Current GPU memory: {torch.cuda.memory_allocated() / 1e9:.2f}GB")
-
-            # ADDED: Ensure thorough cleanup of current model
-            self._unload_current_model()
-
-            try:
-                # Create new model instance
-                if model_type == 'geo':
-                    # Initialize DeiT if needed
-                    if self._deit_base is None:
-                        from transformers import DeiTModel
-                        self._deit_base = DeiTModel.from_pretrained(
-                            '/app/deit-base-distilled-patch16-384',
-                            ignore_mismatched_sizes=True,
-                            output_attentions=True
-                        )
-                        self._deit_base.eval()
-
-                    # Create model instance first
-                    self.models[model_type] = DeiT384_exp(128, base_model=self._deit_base)
-                    # Load state dict while model is on CPU
-                    self.models[model_type].load_state_dict(self.state_dicts[model_type])
-                    self.models[model_type].eval()
-                    # Then move everything to GPU
-                    self._deit_base.to(self.device)
-                    self.models[model_type].to(self.device)
-                else:
-                    self.models[model_type] = ResNet(512)
-                    # Load state dict while on CPU
-                    self.models[model_type].load_state_dict(self.state_dicts[model_type])
-                    self.models[model_type].eval()
-                    # Then move to GPU
-                    self.models[model_type].to(self.device)
-
-                # Validate model creation
-                if self.models[model_type] is None:
-                    raise ValueError(f"Failed to create {model_type} model")
-
-                # Update current model reference
-                self.current_model = model_type
-                # Set attribute reference
-                attr_name = f"net{'_' + model_type if model_type != 'geo' else ''}"
-                setattr(self, attr_name, self.models[model_type])
-
-                logger.info(f"Successfully switched to {model_type} model")
-                logger.info(f"Final GPU memory: {torch.cuda.memory_allocated() / 1e9:.2f}GB")
-
-            except Exception as e:
-                logger.error(f"Error creating/loading {model_type} model: {e}")
-                self._unload_current_model()
-                raise
-        except Exception as e:
-            logger.error(f"Error in switch_model: {e}")
-            raise
-
-    def _unload_current_model(self):
-        """Enhanced model unloading with complete cleanup"""
-        try:
-            if self.current_model is not None:
-                # Get model attribute name based on current model
-                attr_name = f"net{'_' + self.current_model if self.current_model != 'geo' else ''}"
-
-                # Unload current model
-                if hasattr(self, attr_name):
-                    model = getattr(self, attr_name)
-                    if model is not None:
-                        # Move model to CPU
-                        model.cpu()
-                        # Remove reference
-                        delattr(self, attr_name)
-                        self.models[self.current_model] = None
-                        del model
-
-                # ADDED: Also clean DeiT base model if exists
-                if hasattr(self, '_deit_base') and self._deit_base is not None:
-                    self._deit_base.cpu()
-                    self._deit_base = None
-
-                # Reset current model reference
-                self.current_model = None
-
-                # Force cleanup
-                torch.cuda.synchronize()
-                torch.cuda.empty_cache()
-                gc.collect()
-
-        except Exception as e:
-            logger.error(f"Error in _unload_current_model: {e}")
-            raise
+        """Switch model reference without moving memory - all models stay on GPU"""
+        if model_type not in self.models:
+            raise ValueError(f"Invalid model type: {model_type}")
+        
+        if self.models[model_type] is None:
+            raise ValueError(f"Model {model_type} is not initialized")
+        
+        # Update attribute for backward compatibility
+        if model_type == 'geo':
+            self.net = self.models['geo']
+        elif model_type == 'dhn':
+            self.net_dhn = self.models['dhn']
+        
+        logger.info(f"Switched to {model_type} model (no memory movement)")
 
     def _load_llava_model(self):
         """Load LLAVA model and its components."""
@@ -312,64 +180,31 @@ class ModelService:
         ])
 
     def get_feature_vector(self, model_type, image_path):
-        """Memory-efficient feature extraction with enhanced validation"""
-        with gpu_memory_manager():
+        """Use pre-loaded models for feature extraction"""
+        with gpu_memory_manager():  # Using YOUR context manager
             try:
-                # Validate model type and image path
-                if model_type not in self.models:
-                    raise ValueError(f"Invalid model type: {model_type}")
                 if not os.path.exists(image_path):
                     raise FileNotFoundError(f"Image not found: {image_path}")
 
-                logger.info(f"Starting feature extraction for {model_type}")
-
-                # Process image on CPU
-                try:
-                    img = Image.open(image_path).convert('RGB')
-                    img_tensor = self.transform(img).unsqueeze(0)
-                    del img
-                except Exception as e:
-                    logger.error(f"Failed to process image: {e}")
-                    raise
-
-                # Validate model exists and move to device
+                # Get the pre-loaded model
                 model = self.models[model_type]
-                if model is None:
-                    raise ValueError(f"Model {model_type} is not initialized")
+                if model_type not in self.models:
+                    raise ValueError(f"Invalid model type: {model_type}")
 
-                try:
-                    # model.to(self.device)
-                    img_tensor = img_tensor.to(self.device)
-                except Exception as e:
-                    logger.error(f"Failed to move tensors to device: {e}")
-                    raise
+                # Process image
+                img = Image.open(image_path).convert('RGB')
+                img_tensor = self.transform(img).unsqueeze(0).to(self.device)
 
-                # Extract features
-                try:
-                    with torch.no_grad():
-                        features = model(img_tensor)[0].sign().cpu().numpy()
-                except Exception as e:
-                    logger.error(f"Failed to extract features: {e}")
-                    raise
+                # Extract features with no gradient computation
+                with torch.no_grad():
+                    features = model(img_tensor)[0].sign().cpu().numpy()
 
                 return features
 
             except Exception as e:
                 logger.error(f"Feature extraction failed for {model_type}: {str(e)}")
                 raise
-            finally:
-                # Cleanup
-                try:
-                    if 'model' in locals() and model is not None:
-                        model.cpu()
-                    cleanup_vars = ['img_tensor', 'img', 'model']
-                    for var in cleanup_vars:
-                        if var in locals():
-                            del locals()[var]
-                except Exception as e:
-                    logger.error(f"Cleanup failed in feature extraction: {e}")
-                torch.cuda.empty_cache()
-                gc.collect()
+
 
     def compute_attention_map(self, net, image_tensor):
         """Compute attention map with enhanced validation and error handling"""
@@ -415,109 +250,46 @@ class ModelService:
             torch.cuda.empty_cache()
 
     def base_predictor(self, image_path, _, __, device, not_segment=True):
-        """Base predictor with enhanced validation and memory management"""
-        with gpu_memory_manager():
+        """Base predictor with your memory management"""
+        with gpu_memory_manager():  # Using YOUR context manager
             try:
-                # Validate inputs
                 if not image_path or not os.path.exists(image_path):
                     raise FileNotFoundError(f"Invalid image path: {image_path}")
 
                 if not_segment:
-                    total_start = time.time()
+                    # Geographic prediction
                     logger.info(f"Starting geographic prediction for: {image_path}")
-
-                    # Load and process image
-                    image_load_start = time.time()
-                    try:
-                        with gpu_memory_manager():
-                            original_image = Image.open(image_path).convert('RGB')
-                            image_tensor = self.transform(original_image).unsqueeze(0)
-                            del original_image
-                        logger.info(f"Image loading and transformation took: {time.time() - image_load_start:.2f}s")
-                    except Exception as e:
-                        logger.error(f"Failed to load/process image: {e}")
-                        raise
-                    # Process with geo model and extract features
-                    attention_map_path = None
-                    try:
-                        model_process_start = time.time()
-                        with gpu_memory_manager():
-                            # Switch model and get reference
-                            model_switch_start = time.time()
-                            self.switch_model('geo')
-                            current_model = self.models['geo']
-                            logger.info(f"Model switching took: {time.time() - model_switch_start:.2f}s")
-
-                            # Compute attention map
-                            attention_start = time.time()
-                            image_tensor = image_tensor.to(self.device)
-                            with torch.no_grad():
-                                outputs, attention = current_model(image_tensor, return_attention=True)
-                                attention_map = self.compute_attention_map(current_model, image_tensor)
-                                attention_map_path = self._save_attention_map(attention_map, Image.open(image_path))
-                            logger.info(
-                                f"Attention map computation and saving took: {time.time() - attention_start:.2f}s")
-
-                            # Extract features
-                            features_start = time.time()
-                            query_vec = current_model(image_tensor)[0].sign().cpu().numpy()
-                            query_vec = np.where(query_vec == -1, 0, query_vec)
-                            logger.info(f"Feature extraction took: {time.time() - features_start:.2f}s")
-
-                            logger.info(f"Total model processing took: {time.time() - model_process_start:.2f}s")
-                    except Exception as e:
-                        logger.error(f"Failed in geo model processing: {e}")
-                        raise
-                    finally:
-                        # Cleanup tensors but don't unload model yet
-                        cleanup_vars = ['image_tensor', 'outputs', 'attention', 'attention_map']
-                        for var in cleanup_vars:
-                            if var in locals():
-                                del locals()[var]
-                        torch.cuda.empty_cache()
+                    
+                    # Process image once
+                    original_image = Image.open(image_path).convert('RGB')
+                    image_tensor = self.transform(original_image).unsqueeze(0).to(self.device)
+                    
+                    # Use pre-loaded geo model (no switching needed)
+                    current_model = self.models['geo']
+                    
+                    with torch.no_grad():
+                        outputs, attention = current_model(image_tensor, return_attention=True)
+                        attention_map = self.compute_attention_map(current_model, image_tensor)
+                        attention_map_path = self._save_attention_map(attention_map, original_image)
+                        
+                        # Extract features
+                        query_vec = outputs[0].sign().cpu().numpy()
+                        query_vec = np.where(query_vec == -1, 0, query_vec)
 
                     # Database processing
-                    try:
-                        db_start = time.time()
-                        with gpu_memory_manager():
-                            # formatted_predictions = self._process_database_predictions(query_vec)
-                            # formatted_predictions = self.prediction_service.process_database_predictions(query_vec)
-                            formatted_predictions = self.prediction_service.process_database_predictions_custom_faiss(query_vec)
+                    formatted_predictions = self.prediction_service.process_database_predictions_custom_faiss(query_vec)
 
-                        logger.info(f"Database processing took: {time.time() - db_start:.2f}s")
-                    except Exception as e:
-                        logger.error(f"Failed in database processing: {e}")
-                        raise
-                    finally:
-                        # Now we can safely unload the model
-                        model_unload_start = time.time()
-                        self._unload_current_model()
-                        logger.info(f"Model unloading took: {time.time() - model_unload_start:.2f}s")
-
-                    logger.info(f"Total geographic processing took: {time.time() - total_start:.2f}s")
                     return formatted_predictions, attention_map_path
                 else:
-                    # Segment feature extraction
-                    try:
-                        with gpu_memory_manager():
-                            # Switch to dhn model
-                            self.switch_model('dhn')
-                            if self.models['dhn'] is None:
-                                raise ValueError("DHN model is not initialized")
-                            query_vec = self.get_feature_vector('dhn', image_path)
-                            query_vec = np.where(query_vec == -1, 0, query_vec)
-                            return query_vec
+                    # Segment feature extraction using pre-loaded DHN model
+                    query_vec = self.get_feature_vector('dhn', image_path)
+                    query_vec = np.where(query_vec == -1, 0, query_vec)
+                    return query_vec
 
-                    except Exception as e:
-                        logger.error(f"Failed in segment feature extraction: {e}")
-                        raise
             except Exception as e:
                 logger.error(f"Error in base predictor: {str(e)}")
                 raise
-            finally:
-                self._unload_current_model()
-                gc.collect()
-                torch.cuda.empty_cache()
+
 
     def _save_attention_map(self, attention_map, original_image):
         """Save attention map visualization with proper image resizing and memory management."""
@@ -670,7 +442,7 @@ class ModelService:
         from llava.eval.run_llava import eval_model_with_global_model  # Add this import
         try:
             # ADDED: Force cleanup before LLaVA
-            self._unload_current_model()
+            # self._unload_current_model()
             torch.cuda.empty_cache()
             gc.collect()
 

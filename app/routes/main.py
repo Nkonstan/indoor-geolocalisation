@@ -49,13 +49,16 @@ def llava_interpret():
         # Generate appropriate prompt based on the type
         if prompt_type == 'traffic_sign':
             system_context, user_message = PromptGenerator.get_traffic_sign_prompt(country)
+            prompt = PromptGenerator.get_analysis_prompt(system_context, user_message)
+            # system_context, user_message = PromptGenerator.get_traffic_sign_prompt(country)
         elif prompt_type == 'license_plate':
             system_context, user_message = PromptGenerator.get_license_plate_prompt(country)
+            prompt = PromptGenerator.get_analysis_prompt(system_context, user_message)
         else:  # general scene analysis
             system_context, user_message = PromptGenerator.get_outdoor_scene_prompt(country)
+            prompt = PromptGenerator.get_analysis_prompt(system_context, user_message)
 
         # Generate prompt and get LLaVA response
-        prompt = PromptGenerator.get_analysis_prompt(system_context, user_message)
         llava_response = LLaVAHandler.get_response(image_service.model_service, prompt, temp_image_path)
 
         # Parse response
@@ -163,8 +166,10 @@ def process_image():
 
             # Step 1: Geographic models processing
             with timer.time_process("Geographic Processing"):
-                result = image_service.process_image(file)
+                with torch.no_grad():
+                    result = image_service.process_image(file)
                 log_memory_usage("After geographic processing")
+                del file
                 gc.collect()
                 torch.cuda.empty_cache()
 
@@ -288,16 +293,21 @@ def process_image():
             # Step 2: LLaVA processing with memory management
             with timer.time_process("LLaVA Processing"):
                 try:
-                    image_service.model_service._unload_current_model()
+                    # image_service.model_service._unload_current_model()
                     gc.collect()
                     torch.cuda.empty_cache()
                     # initial_prompt = PromptGenerator.get_analysis_prompt(system_context,
                     #                                                      "I want your detailed geo-localization analysis based on all the above. Clearly observable features that support the AI location analysis.")
-                    initial_prompt = PromptGenerator.get_analysis_prompt(system_context,
+                    with torch.no_grad():
+                        initial_prompt = PromptGenerator.get_analysis_prompt(system_context,
                                                                          "I want your detailed geo-localization analysis based on all the above AND your final prediction of which country this is. Start with clearly observable features that support the AI location analysis, and end with a specific country prediction.")
-                    args = LLaVAHandler.create_args(image_service.model_service, initial_prompt, result['image_path'])
-                    log_memory_usage("Before LLaVA processing")
-                    initial_llava_response = image_service.model_service.invoke_llava_model(args)
+                        args = LLaVAHandler.create_args(image_service.model_service, initial_prompt, result['image_path'])
+                        log_memory_usage("Before LLaVA processing")
+                        initial_llava_response = image_service.model_service.invoke_llava_model(args)
+                                    # CRITICAL: Clean up args immediately
+                        del args, initial_prompt
+                        torch.cuda.empty_cache()
+                        gc.collect()
                     log_memory_usage("After LLaVA processing")
                     parsed_response = ResponseParser.parse_llava_response(initial_llava_response)
 

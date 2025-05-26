@@ -16,6 +16,7 @@ class DatabaseService:
         self.mongo_client = MongoClient(self.config.MONGODB_URI)
         self.db = self.mongo_client[self.config.MONGODB_DATABASE]
         self._initialize_mongodb_data()
+        # torch.set_grad_enabled(False)
 
     def _initialize_mongodb_data(self):
         """Initialize MongoDB data with indexes for on-demand loading"""

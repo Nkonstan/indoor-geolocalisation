@@ -170,40 +170,123 @@ class PromptGenerator:
         Final Country Prediction: [Based on BOTH the AI image analysis AND your visual assessment, you MUST provide your final country prediction. ONLY THE COUNTRY NAME, NO ADDITIONAL EXPLANATION]
         """
 
+    # @staticmethod
+    # def get_traffic_sign_analysis_prompt(system_context, user_message):
+    #     return f"""AI image analysis:{system_context}
+    #
+    #     CRITICAL OCR MISSION: Your primary task is to correctly identify the ALPHABET SYSTEM and TEXT on this traffic sign.
+    #
+    #     1. ALPHABET IDENTIFICATION FIRST:
+    #        • Greek: Λ Δ Σ Ω Θ Ε Ρ (Example: "ΑΘΗΝΑ", "ΛΑΜΙΑ")
+    #        • Cyrillic: Я Ж Ц Ш Щ Ъ Ь (Example: "МОСКВА")
+    #        • Latin: A-Z with variations
+    #
+    #     2. CHARACTER VERIFICATION:
+    #        • Report ONLY characters you can verify with 100% certainty
+    #        • NEVER list more than 10 items total
+    #        • If text is present but unclear, state "Text visible but cannot be reliably transcribed"
+    #
+    #     3. SIGN ANALYSIS:
+    #        • Color: Identify exact background/text colors
+    #        • Shape: Note overall sign shape and border
+    #        • Symbols: Describe arrows, route numbers, pictograms
+    #
+    #     ⚠️ CRITICAL ANTI-HALLUCINATION RULE ⚠️
+    #     NEVER generate lists longer than 10 items. If you see multiple similar items (like route numbers),
+    #     mention only 2-3 examples followed by "and similar items" rather than listing all of them.
+    #
+    #     User Question: {user_message}
+    #
+    #     ⚠️ CRITICAL FORMAT RULE ⚠️
+    #     You MUST use this EXACT format in your response (including markers, bullet points and ALL sections):
+    #
+    #     Response: [Your answer here. If for something that you are asked you don't have enough clues you must indicate it]
+    #
+    #     Uncertainty Analysis:
+    #
+    #     - ALTERNATIVES: [Other potential interpretations that could lead your evidence into misinterpretation]
+    #     - LIMITATIONS: [Factors that may affect your answer, such as image quality, ambiguous elements, cultural overlaps etc]
+    #
+    #     Confidence Level Assessment: [ONLY USE 'High', 'Medium', or 'Low', NO ADDITIONAL EXPLANATION]
+    #
+    #     Final Country Prediction: [Based on BOTH the AI image analysis AND your visual assessment, you MUST provide your final country prediction. ONLY THE COUNTRY NAME, NO ADDITIONAL EXPLANATION]
+    #     """
+
     @staticmethod
     def get_traffic_sign_prompt(country):
         """
-        Generate specialized traffic sign prompt with enhanced context
+        Generate specialized traffic sign prompt with enhanced OCR and anti-hallucination measures
         """
-        system_context = "You are an expert in European traffic signs analysis."
+        system_context = "You are an expert in European traffic signs analysis with specialized OCR capabilities."
 
         user_message = f"""Analyze this traffic sign to determine if it aligns with {country}'s signage.
 
-        **Domain Knowledge (MUST CONSIDER):**
-        - Vienna Convention standards: 
-          • Warning: Red-bordered triangles
-          • Prohibitory: Red-bordered circles
-          • Mandatory: Blue circles
-        - Primary differentiators: Language text > symbols > color shades
+        CRITICAL OCR MISSION: Your primary task is to correctly identify the ALPHABET SYSTEM and TEXT on this traffic sign.
+
+        1. ALPHABET IDENTIFICATION FIRST:
+           • Greek: Λ Δ Σ Ω Θ Ε Ρ (Example: "ΑΘΗΝΑ", "ΛΑΜΙΑ")
+           • Cyrillic: Я Ж Ц Ш Щ Ъ Ь (Example: "МОСКВА")
+           • Latin: A-Z with variations
+
+        2. CHARACTER VERIFICATION:
+           • Report ONLY characters you can verify with 100% certainty
+           • NEVER list more than 10 items total
+           • If text is present but unclear, state "Text visible but cannot be reliably transcribed"
+
+        3. SIGN ANALYSIS:
+           • Color: Identify exact background/text colors
+           • Shape: Note overall sign shape and border
+           • Symbols: Describe arrows, route numbers, pictograms
+
+        ⚠️ CRITICAL ANTI-HALLUCINATION RULE ⚠️
+        NEVER generate lists longer than 10 items. If you see multiple similar items (like route numbers),
+        mention only 2-3 examples followed by "and similar items" rather than listing all of them.
 
         **Country-Specific Context for {country}:**
         {PromptGenerator._get_country_context(country)}
 
-        **Analysis Protocol:**
-        1. Text Analysis (IF PRESENT):
-           - Language: Verify characters match {country}'s official language(s)
-           - Font: Note distinctive national font characteristics
-        2. Visual Elements:
-           • Shape: Compare to Vienna Convention standards
-           • Colors: Use precise terminology (e.g., Pantone 485C red)
-           • Symbols: Describe EXACTLY without interpretation
-        3. Unique {country} Features Check
+        **VISUAL FIRST APPROACH:**
+        Begin by describing ONLY the sign's shape, color, and basic visual elements before attempting text recognition.
 
-        **Absolute Restrictions:**
-        - NO text interpretation unless 100% character certainty
-        - NO symbol guessing - describe only visible elements"""
+        Based EXCLUSIVELY on verifiable visual elements, assess whether this sign's characteristics align with traffic signage from {country}.
+        """
 
         return system_context, user_message
+
+    # @staticmethod
+    # def get_traffic_sign_prompt(country):
+    #     """
+    #     Generate specialized traffic sign prompt with enhanced context
+    #     """
+    #     system_context = "You are an expert in European traffic signs analysis."
+    #
+    #     user_message = f"""Analyze this traffic sign to determine if it aligns with {country}'s signage.
+    #
+    #     **Domain Knowledge (MUST CONSIDER):**
+    #     - Vienna Convention standards:
+    #       • Warning: Red-bordered triangles
+    #       • Prohibitory: Red-bordered circles
+    #       • Mandatory: Blue circles
+    #     - Primary differentiators: Language text > symbols > color shades
+    #
+    #     **Country-Specific Context for {country}:**
+    #     {PromptGenerator._get_country_context(country)}
+    #
+    #     **Analysis Protocol:**
+    #     1. Text Analysis (IF PRESENT):
+    #        - Language: Verify characters match {country}'s official language(s)
+    #        - Font: Note distinctive national font characteristics
+    #     2. Visual Elements:
+    #        • Shape: Compare to Vienna Convention standards
+    #        • Colors: Use precise terminology (e.g., Pantone 485C red)
+    #        • Symbols: Describe EXACTLY without interpretation
+    #     3. Unique {country} Features Check
+    #
+    #     **Absolute Restrictions:**
+    #     - NO text interpretation unless 100% character certainty
+    #     - NO symbol guessing - describe only visible elements"""
+    #
+    #     return system_context, user_message
 
     @staticmethod
     def _get_country_context(country):
