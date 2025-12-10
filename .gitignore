@@ -23,6 +23,11 @@ segmentation_features_dhn.csv
 *.zip
 *.tar.gz
 
+# Model / data binaries you don't want in Git
+*.safetensors
+*.npy
+*.npz
+
 # Python stuff
 __pycache__/
 *.py[cod]
@@ -33,3 +38,5 @@ env/
 venv/
 ENV/
 *.egg-info/
+
+filter_env/

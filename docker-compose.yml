@@ -1,5 +1,3 @@
-
-version: '3.8'
 services:
   mongodb_migration:
     image: geo_datamigration
@@ -28,6 +26,8 @@ services:
 #      dockerfile: Dockerfile
     image: llava_app  # Use the pre-built image
     container_name: mca-g-llava-app
+    restart: unless-stopped 
+    init: true
     runtime: nvidia
     deploy:
       resources:
@@ -77,6 +77,8 @@ services:
       context: ./MATERobot
       dockerfile: Dockerfile.materobot
     container_name: mca-g-materobot
+    restart: unless-stopped 
+    init: true
     runtime: nvidia
     deploy:
       resources:
@@ -105,6 +107,8 @@ services:
       context: .
       dockerfile: LangSAM/Dockerfile.langsam
     container_name: mca-g-langsam
+    restart: unless-stopped 
+    init: true
     runtime: nvidia
     deploy:
       resources:
