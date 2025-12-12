@@ -14,3 +14,9 @@ segmentation_features_dhn.csv
 sam-checkpoint/ 
 filter_env/
 .git/
+
+__pycache__/
+*.pyc
+.vscode/
+*.log
+.env

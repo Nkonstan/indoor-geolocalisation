@@ -1,5 +1,5 @@
-matplotlib
-numpy
-packaging
-prettytable
-scipy
+matplotlib==3.10.1
+numpy==1.26.4
+packaging==24.2
+prettytable==3.16.0
+scipy==1.15.3

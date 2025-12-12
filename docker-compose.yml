@@ -1,5 +1,8 @@
 services:
   mongodb_migration:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile.migration
     image: geo_datamigration
     container_name: vanguard-certh-mcag-migration
     volumes:
@@ -57,6 +60,9 @@ services:
       - ./material_per_country.png:/app/static/material_per_country.png
       - ./static:/app/static
       - ./segmentations:/app/segmentations
+      - ./airbnb_14countries_train_database_128bits_0.6296825813840561:/app/airbnb_14countries_train_database_128bits_0.6296825813840561
+      - ./DHN_airbnb_14countries_512bits_0.3558918258844033:/app/DHN_airbnb_14countries_512bits_0.3558918258844033
+
     working_dir: /app
     ports:
       - "5006:5000"
@@ -70,13 +76,14 @@ services:
         condition: service_started
     networks:
       - default
-      - vanguard-network
+      # - vanguard-network
 
   materobot:
-    build:
-      context: ./MATERobot
-      dockerfile: Dockerfile.materobot
+    # build:
+    #   context: ./MATERobot
+    #   dockerfile: Dockerfile.materobot
     container_name: mca-g-materobot
+    image: materobot_app
     restart: unless-stopped 
     init: true
     runtime: nvidia
@@ -103,10 +110,11 @@ services:
     command: ["conda", "run", "-n", "materobot_env", "--no-capture-output", "python3", "-u", "materobot_app.py"]
 
   langsam:
-    build:
-      context: .
-      dockerfile: LangSAM/Dockerfile.langsam
+    # build:
+    #   context: .
+    #   dockerfile: LangSAM/Dockerfile.langsam
     container_name: mca-g-langsam
+    image: langsam_app
     restart: unless-stopped 
     init: true
     runtime: nvidia
@@ -156,10 +164,10 @@ volumes:
   mongodb_config:
     driver: local
 
-networks:
-  vanguard-network:
-    name: vanguard-network
-    external: true
-  default:
-    name: mca-g-lava-network
-    driver: bridge
+# networks:
+#   vanguard-network:
+#     name: vanguard-network
+#     external: true
+#   default:
+#     name: mca-g-lava-network
+#     driver: bridge

@@ -1,2 +1,2 @@
-cityscapesscripts
-nibabel
+cityscapesscripts==2.2.4
+nibabel==5.3.2
