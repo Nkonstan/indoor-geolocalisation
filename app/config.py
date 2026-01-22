@@ -3,9 +3,9 @@ import torch
 
 
 class Config:
-    SECRET_KEY = '4adda9070acf5830ed45b76da140974147304941e9745a58'
     DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+    SECRET_KEY = '4adda9070acf5830ed45b76da140974147304941e9745a58'
     # MongoDB settings
     MONGODB_URI = 'mongodb://mongodb:27017/'
     MONGODB_DATABASE = 'geolocation_db'
@@ -16,8 +16,10 @@ class Config:
     MONGODB_DHN_COLLECTION = 'segmentation_dhn'  # for DHN segmentation data
     # MONGODB_HASHNET_COLLECTION = 'segmentation_hashnet'  # for HashNet segmentation data
 
-    # Model paths
+    # Model path Llava
     MODEL_PATH = '/app/llava-v1.6-mistral-7b'
+     # Geolocation model
+    DEIT_MODEL_PATH = os.getenv('DEIT_MODEL_PATH', '/app/deit-base-distilled-patch16-384')
 
     # Geographical model paths and files
     GEO_MODEL_PATH = "./airbnb_14countries_train_database_128bits_0.6296825813840561/model.pt"
@@ -37,6 +39,15 @@ class Config:
 
     # API endpoints
     MATERIAL_RECOGNITION_URL = 'http://materobot:5001/material_recognition'
+
+    LANGSAM_URL = os.getenv('LANGSAM_URL', 'http://langsam:5002/segment')
+
+    # --- [NEW] STORAGE PATHS ---
+    # Centralized paths for output data
+    FAISS_INDEX_DIR = os.getenv('FAISS_INDEX_DIR', '/app/faiss_indexes') 
+    STATIC_DIR = os.getenv('STATIC_DIR', 'static')
+    # Base directory for relative path checks
+    BASE_DIR = os.getenv('BASE_DIR', '/app')
 
     # COUNTRY_NEIGHBORS = {
     #     # Latin American countries

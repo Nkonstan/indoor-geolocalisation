@@ -39,7 +39,8 @@ class SegmentIndexManager:
         self.metadata = {}  # Dictionary of {segment_type: list_of_metadata}
         self.index_ready = {}  # Track which indexes are ready
         self.index_lock = threading.RLock()  # Thread safety
-        self.index_dir = "/app/faiss_indexes"  # Where to save/load indexes
+        # self.index_dir = "/app/faiss_indexes"  # Where to save/load indexes
+        self.index_dir = self.model_service.config.FAISS_INDEX_DIR   # Where to save/load indexes
         os.makedirs(self.index_dir, exist_ok=True)
 
     def get_or_build_index(self, segment_type):
@@ -147,8 +148,9 @@ class ImageService:
                 image = image.resize(new_size, Image.LANCZOS)
                 # Save resized image
                 filename = str(uuid.uuid4()) + '.png'
-                path = os.path.join('static', filename)
-                os.makedirs('static', exist_ok=True)
+                static_dir = self.model_service.config.STATIC_DIR
+                path = os.path.join(static_dir, filename)
+                os.makedirs(static_dir, exist_ok=True)
                 image.save(path, format='PNG', optimize=True)
                 logger.info(f"Image saved to {path}")
                 # Clean up image processing resources
@@ -215,7 +217,7 @@ class ImageService:
         """Get material recognition data from material service."""
         try:
             response = requests.post(
-                'http://mca-g-materobot:5001/material_recognition',
+                self.model_service.config.MATERIAL_RECOGNITION_URL,
                 json={'image_path': image_path}
             )
             response.raise_for_status()
@@ -252,7 +254,7 @@ class ImageService:
             try:
                 # Call Lang-SAM service
                 response = requests.post(
-                    'http://langsam:5002/segment',
+                    self.model_service.config.LANGSAM_URL,
                     json={
                         'image_path': image_path,
                         'targets': ['floor', 'ceiling', 'door', 'window']
@@ -444,7 +446,7 @@ class ImageService:
                     material_mask_base64 = base64.b64encode(img_file.read()).decode('utf-8')
             else:
                 # Try with /app prefix (Docker container)
-                app_path = os.path.join('/app', mask_path.lstrip('/'))
+                app_path = os.path.join(self.model_service.config.BASE_DIR, mask_path.lstrip('/'))
                 logger.info(f"Trying Docker container path: {app_path}")
 
                 if os.path.exists(app_path):

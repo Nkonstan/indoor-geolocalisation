@@ -51,17 +51,23 @@ services:
       - TRANSFORMERS_OFFLINE=1
       - CLIP_MODEL_DIR=/app/clip-vit-large-patch14-336
     volumes:
-      - ./llava-v1.6-mistral-7b:/app/llava-v1.6-mistral-7b
-      - ./deit-base-distilled-patch16-384:/app/deit-base-distilled-patch16-384
-      - ./clip-vit-large-patch14-336:/app/clip-vit-large-patch14-336
+      # - ./llava-v1.6-mistral-7b:/app/llava-v1.6-mistral-7b
+      - ./models/llava-v1.6-mistral-7b:/app/llava-v1.6-mistral-7b
+      # - ./deit-base-distilled-patch16-384:/app/deit-base-distilled-patch16-384
+      - ./models/deit-base-distilled-patch16-384:/app/deit-base-distilled-patch16-384
+      # - ./clip-vit-large-patch14-336:/app/clip-vit-large-patch14-336
+      - ./models/clip-vit-large-patch14-336:/app/clip-vit-large-patch14-336
+      
       - ./app:/app/app
       - ./requirements.txt:/app/requirements.txt
       - ./run.py:/app/run.py
       - ./material_per_country.png:/app/static/material_per_country.png
       - ./static:/app/static
       - ./segmentations:/app/segmentations
-      - ./airbnb_14countries_train_database_128bits_0.6296825813840561:/app/airbnb_14countries_train_database_128bits_0.6296825813840561
-      - ./DHN_airbnb_14countries_512bits_0.3558918258844033:/app/DHN_airbnb_14countries_512bits_0.3558918258844033
+      # - ./airbnb_14countries_train_database_128bits_0.6296825813840561:/app/airbnb_14countries_train_database_128bits_0.6296825813840561
+      - ./models/hash-models/airbnb_14countries_train_database_128bits_0.6296825813840561:/app/airbnb_14countries_train_database_128bits_0.6296825813840561
+      # - ./DHN_airbnb_14countries_512bits_0.3558918258844033:/app/DHN_airbnb_14countries_512bits_0.3558918258844033
+      - ./models/hash-models/DHN_airbnb_14countries_512bits_0.3558918258844033:/app/DHN_airbnb_14countries_512bits_0.3558918258844033
 
     working_dir: /app
     ports:
@@ -130,8 +136,10 @@ services:
       - CUDA_VISIBLE_DEVICES=0
     volumes:
       - ./static:/app/static
-      - ./sam-checkpoints:/root/.cache/torch/hub/checkpoints
-      - ./grounding-dino-base:/app/grounding-dino-base
+      # - ./sam-checkpoints:/root/.cache/torch/hub/checkpoints
+      - ./models/sam-checkpoints:/root/.cache/torch/hub/checkpoints
+      # - ./grounding-dino-base:/app/grounding-dino-base
+      - ./models/grounding-dino-base:/app/grounding-dino-base
       - ./segmentations:/app/segmentations
       - ./LangSAM/app.py:/app/app.py
       - ./LangSAM/Dockerfile.langsam:/app/Dockerfile.langsam

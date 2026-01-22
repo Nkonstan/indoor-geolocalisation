@@ -69,6 +69,16 @@ class ModelService:
 
     def _initialize_models(self):
         """Load all models on GPU and keep them there"""
+    # --- DEBUG START: VERIFY CONFIGURATION ---
+        logger.info("\n" + "="*60)
+        logger.info("🚀  STARTING MODEL SERVICE - VERIFYING PATHS  🚀")
+        logger.info("="*60)
+        logger.info(f"📍 DeiT Model Path:   {self.config.DEIT_MODEL_PATH}")
+        logger.info(f"📍 Geo Model Path:    {self.config.GEO_MODEL_PATH}")
+        logger.info(f"📍 DHN Model Path:    {self.config.DHN_MODEL_PATH}")
+        logger.info(f"📍 LLaVA Model Path:  {self.config.MODEL_PATH}")
+        logger.info("="*60 + "\n")
+        # --- DEBUG END ---
         try:
             logger.info("Loading all models on GPU...")
             with gpu_memory_manager():
@@ -81,7 +91,7 @@ class ModelService:
                     from transformers import DeiTModel
                     logger.info("Initializing DeiT base model on GPU...")
                     self._deit_base = DeiTModel.from_pretrained(
-                        '/app/deit-base-distilled-patch16-384',
+                        self.config.DEIT_MODEL_PATH,
                         ignore_mismatched_sizes=True,
                         output_attentions=True
                     )
