@@ -1,4 +1,5 @@
 models/
+data/
 
 save_binarycodes_paths_labels_new/
 segmentations/
@@ -33,5 +34,8 @@ env/
 venv/
 ENV/
 *.egg-info/
+
+.idea/
+.idea_*/
 
 filter_env/

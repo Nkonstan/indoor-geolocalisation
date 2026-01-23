@@ -219,7 +219,7 @@ def process_image():
 
                 logger.info(f"Using reference data path: {reference_data_path}")
                 logger.info(f"Path exists: {os.path.exists(reference_data_path)}")
-                logger.info(f"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+                logger.info(f"NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN")
 
                 # Call the helper function to encode all images to base64
                 attention_map_base64, material_mask_base64, segmentation_results = image_service.encode_images_to_base64(

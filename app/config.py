@@ -14,7 +14,6 @@ class Config:
     MONGODB_BINARY_COLLECTION = 'binary_codes'  # for your binary codes
     MONGODB_PATHS_COLLECTION = 'paths'  # for your paths
     MONGODB_DHN_COLLECTION = 'segmentation_dhn'  # for DHN segmentation data
-    # MONGODB_HASHNET_COLLECTION = 'segmentation_hashnet'  # for HashNet segmentation data
 
     # Model path Llava
     MODEL_PATH = '/app/llava-v1.6-mistral-7b'
@@ -24,15 +23,25 @@ class Config:
     # Geographical model paths and files
     GEO_MODEL_PATH = "./airbnb_14countries_train_database_128bits_0.6296825813840561/model.pt"
     DHN_MODEL_PATH = "./DHN_airbnb_14countries_512bits_0.3558918258844033/model.pt"
-    # HASHNET_MODEL_PATH = "./Hashnet_airbnb_14countries_512bits_0.3702259939175427/model.pt"
 
-    # Country and continent configurations
+    # # Country and continent configurations with Portugal
+    # COUNTRIES = ["Bolivia", "Germany", "Poland", "Pakistan", "Chile",
+    #              "Kazakhstan", "Japan", "Argentina", "Colombia",
+    #              "Norway", "France", "Peru", "Hungary", "KoreaSouth", "Portugal"]
+
+    # CONTINENTS_DICT = {
+    #     "Europe": ["Germany", "Poland", "Norway", "France", "Hungary", "Portugal"],
+    #     "Asia": ["Pakistan", "Kazakhstan", "Japan", "KoreaSouth"],
+    #     "latinAmerica": ["Bolivia", "Chile", "Argentina", "Colombia", "Peru"]
+    # }
+
+    # Country and continent configurations without Portugal
     COUNTRIES = ["Bolivia", "Germany", "Poland", "Pakistan", "Chile",
                  "Kazakhstan", "Japan", "Argentina", "Colombia",
-                 "Norway", "France", "Peru", "Hungary", "KoreaSouth", "Portugal"]
+                 "Norway", "France", "Peru", "Hungary", "KoreaSouth"]
 
     CONTINENTS_DICT = {
-        "Europe": ["Germany", "Poland", "Norway", "France", "Hungary", "Portugal"],
+        "Europe": ["Germany", "Poland", "Norway", "France", "Hungary"],
         "Asia": ["Pakistan", "Kazakhstan", "Japan", "KoreaSouth"],
         "latinAmerica": ["Bolivia", "Chile", "Argentina", "Colombia", "Peru"]
     }
@@ -42,34 +51,12 @@ class Config:
 
     LANGSAM_URL = os.getenv('LANGSAM_URL', 'http://langsam:5002/segment')
 
-    # --- [NEW] STORAGE PATHS ---
-    # Centralized paths for output data
+    # paths for output data
     FAISS_INDEX_DIR = os.getenv('FAISS_INDEX_DIR', '/app/faiss_indexes') 
     STATIC_DIR = os.getenv('STATIC_DIR', 'static')
     # Base directory for relative path checks
     BASE_DIR = os.getenv('BASE_DIR', '/app')
 
-    # COUNTRY_NEIGHBORS = {
-    #     # Latin American countries
-    #     "Argentina": ["Chile", "Peru", "Bolivia", "Colombia"],
-    #     "Bolivia": ["Peru", "Chile", "Argentina", "Colombia"],
-    #     "Chile": ["Argentina", "Peru", "Bolivia"],
-    #     "Colombia": ["Peru", "Bolivia", "Argentina"],
-    #     "Peru": ["Bolivia", "Chile", "Colombia", "Argentina"],
-    #
-    #     # European countries
-    #     "France": ["Germany", "Poland", "Hungary"],
-    #     "Germany": ["France", "Poland", "Hungary"],
-    #     "Hungary": ["Poland", "Germany", "France"],
-    #     "Norway": ["Germany", "Poland"],
-    #     "Poland": ["Germany", "Hungary", "France"],
-    #
-    #     # Asian countries
-    #     "Japan": ["KoreaSouth"],
-    #     "KoreaSouth": ["Japan"],
-    #     "Kazakhstan": ["Pakistan", "KoreaSouth"],
-    #     "Pakistan": ["Kazakhstan"]
-    # }
 
  # Add the country descriptions dictionary chatgpt and claude
     COUNTRY_DESCRIPTIONS = {
