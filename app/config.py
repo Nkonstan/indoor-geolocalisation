@@ -57,6 +57,14 @@ class Config:
     # Base directory for relative path checks
     BASE_DIR = os.getenv('BASE_DIR', '/app')
 
+    # Paths
+    SEGMENTATION_REFERENCE_PATH = "/app/segmentations"
+
+    # Prompts
+    LLAVA_ANALYSIS_PROMPT = (
+        "I want your detailed geo-localization analysis based on all the above AND your final prediction of which country this is. Start with clearly observable features that support the AI location analysis, and end with a specific country prediction."
+    )
+
 
  # Add the country descriptions dictionary chatgpt and claude
     COUNTRY_DESCRIPTIONS = {
