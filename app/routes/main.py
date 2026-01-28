@@ -170,8 +170,6 @@ def process_image():
             else:
                 segmentation_results = image_service.process_automatic_segmentation(result['image_path'])
 
-                logger.info(f"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
-
             # C. Encode Images (This modifies state, so we keep it here or move to image_service)
             attention_map_base64, material_mask_base64, segmentation_results = image_service.encode_images_to_base64(
                 result, segmentation_results, reference_data_path
@@ -257,6 +255,7 @@ def process_image():
 
         return render_template('message.html', error=str(e), timing_summary=timer.timings)
 
+
 @main_bp.route('/send_message', methods=['POST'])
 def send_message():
     try:
@@ -286,25 +285,17 @@ def send_message():
         # Get parsed response
         parsed_response = ResponseParser.parse_llava_response(llava_response)
 
-        # Format the response before sending it to frontend
-        confidence_emoji = {
-            "High": "🟢",
-            "Medium": "🟡",
-            "Low": "🔴"
-        }
-
-        final_response = f"{confidence_emoji[parsed_response['confidence_level']]} {parsed_response['confidence_level']} Confidence\n{parsed_response['response']}"
-
-        # Add uncertainty section if it exists
-        if parsed_response['uncertainty']:
-            final_response = f"{final_response}\n\nNote: {parsed_response['uncertainty']}"
-
+        # --- CHANGE START ---
+        # We DO NOT format the string here anymore. We send raw data.
         return jsonify({
             "reply": {
-                "response": final_response,
+                "response": parsed_response['response'], # Raw text only
+                "confidence_level": parsed_response['confidence_level'],
+                "uncertainty": parsed_response['uncertainty'],
                 "status": "success"
             }
         })
+        # --- CHANGE END ---
 
     except Exception as e:
         logger.error(f"Error in send_message: {str(e)}")

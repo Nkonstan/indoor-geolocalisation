@@ -534,25 +534,32 @@
             messageElem.classList.add(role.toLowerCase() + '-message');
 
             let htmlContent = '';
+            
             if (role === "LLaVA") {
-                 // Check if content is the structured object or just a string
-                let responseText = (typeof content === 'object' && content.response) ? content.response : (typeof content === 'string' ? content : "Received invalid assistant message format.");
-                let confidence = (typeof content === 'object' && content.confidence_level) ? content.confidence_level : "Medium"; // Default confidence
+                // 1. Extract Data
+                // If content is object, use properties. If string, use directly.
+                let responseText = (typeof content === 'object' && content.response) ? content.response : content;
+                let confidence = (typeof content === 'object' && content.confidence_level) ? content.confidence_level : "Medium";
                 let notes = (typeof content === 'object' && content.uncertainty) ? content.uncertainty : "";
-                // Extract predicted country (still defaults to "" if missing)
-                let predicted_country = (typeof content === 'object' && content.predicted_country) ? content.predicted_country : "";
-
+                
+                // 2. Determine Emoji
                 let confidenceEmoji = confidence.toLowerCase() === "high" ? "🟢" :
                                     confidence.toLowerCase() === "medium" ? "🟡" : "🔴";
 
-                // Build HTML with proper comments and always show Final Location Prediction
+                // 3. Build HTML (CLEANED UP)
+                // We REMOVED the "Final Location Prediction" block here.
+                // We keep the Assistant Header and Confidence Badge.
                 htmlContent = `
                     <p class="assistant">
-                        <strong>Geo-location Assistant:</strong> <span class="confidence-indicator confidence-${confidence.toLowerCase()}">${confidenceEmoji} ${confidence} Confidence</span>
-                        <br>${responseText}
-                        <br><br><strong>Final Location Prediction:</strong> ${predicted_country ? predicted_country : 'Not found in analysis'}
+                        <strong>Geo-location Assistant:</strong> 
+                        <span class="confidence-indicator confidence-${confidence.toLowerCase()}">
+                            ${confidenceEmoji} ${confidence} Confidence
+                        </span>
+                        <br>
+                        ${responseText}
                         ${notes ? `<div class="uncertainty-notes">Note: ${notes}</div>` : ''}
                     </p>`;
+                    
             } else if (role === "System") {
                 htmlContent = `<p class="system"><strong>${role}:</strong> ${content}</p>`;
             } else { // User
