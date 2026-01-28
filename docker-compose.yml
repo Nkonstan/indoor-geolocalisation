@@ -59,6 +59,7 @@ services:
       - ./run.py:/app/run.py
       - ./data/input/material_per_country.png:/app/static/material_per_country.png
       - ./data/output/static:/app/static
+      - ./app/static/style.css:/app/static/style.css
       - ./data/input/segmentations:/app/segmentations
       - ./models/hash-models/airbnb_14countries_train_database_128bits_0.6296825813840561:/app/airbnb_14countries_train_database_128bits_0.6296825813840561
       - ./models/hash-models/DHN_airbnb_14countries_512bits_0.3558918258844033:/app/DHN_airbnb_14countries_512bits_0.3558918258844033

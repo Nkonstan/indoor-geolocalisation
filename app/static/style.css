@@ -1,0 +1,241 @@
+<style>
+    /* --- Previous Styles --- */
+    body {
+        text-align: center;
+        font-family: Arial, sans-serif;
+        background-color: white;
+        color: black;
+        padding: 20px;
+    }
+
+    .container {
+        margin-top: 20px;
+        max-width: 2100px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    h1.main-title {
+        color: #333;
+        margin-bottom: 5px;
+        text-align: center; /* Force center alignment */
+        width: 100%;        /* Ensure it spans the full container */
+    }
+    p.intro-note {
+        font-size: 0.9em; 
+        color: #555; 
+        margin-top: 0; 
+        margin-bottom: 25px;
+        max-width: 800px; 
+        margin-left: auto; 
+        margin-right: auto; 
+        font-style: italic;
+        text-align: center; /* <--- This forces the text to center */
+    }
+
+    .main-content-wrapper {
+        display: flex; flex-wrap: wrap; justify-content: space-between;
+        width: 100%; gap: 20px;
+    }
+
+    .left-content {
+        flex: 2; min-width: 600px;
+        display: flex; /* Using Flexbox */
+        flex-direction: column; /* Stack children vertically */
+        align-items: center; /* Center children (image-row, material-section) horizontally */
+    }
+
+    h2 { color: #4CAF50; margin-bottom: 5px; font-size: 1.3em; }
+    .section-description {
+        font-size: 0.85em; color: #555; margin-top: 0; margin-bottom: 10px;
+        max-width: 600px; margin-left: auto; margin-right: auto; text-align: center;
+    }
+
+    ul { list-style-type: none; padding: 0; }
+    li { margin: 3px 0; font-size: 0.85em; }
+
+    button, .button-link {
+        margin-top: 10px; margin-left: 5px; margin-right: 5px; padding: 8px 16px;
+        font-size: 0.95em; cursor: pointer; background-color: #4CAF50; color: white;
+        border: none; border-radius: 4px; text-decoration: none; display: inline-block;
+    }
+    .button-link:hover, button:hover { background-color: #45a049; }
+
+    :root {
+        --element-size: 300px;
+        --chart-height: calc(var(--element-size) * 0.85);
+    }
+
+    .chart-container-wrapper {
+        display: flex; flex-direction: column; align-items: center;
+        width: var(--element-size);
+    }
+    .chart-container {
+        position: relative; height: var(--chart-height); width: 100%;
+        display: flex; justify-content: center; align-items: center; margin-top: 5px;
+    }
+    .chart-wrapper {
+        display: flex; flex-direction: column; justify-content: center;
+        align-items: center; position: relative; width: 100%;
+    }
+    .chart-center {
+        position: absolute; display: flex; flex-direction: column; align-items: center;
+        justify-content: center; width: 60%; height: 60%; top: 20%; left: 50%;
+        transform: translateX(-50%); text-align: center;
+    }
+     .chart-center h4 { margin-bottom: 5px; font-size: 0.9em; color: #333; }
+    .score-explanation { font-size: 0.8em; color: #666; margin-top: 8px; }
+
+    .image-row { /* Container for top row items */
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center; /* Center the items (image/chart containers) horizontally */
+        align-items: flex-start;
+        width: 100%; /* Takes full width available in .left-content */
+        gap: 10px;
+        margin-bottom: 20px; /* Space below this row */
+    }
+
+    .image-container { /* Container for Input Image AND Heatmap Image */
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* Center title/desc/image within */
+        width: var(--element-size);
+    }
+
+    .image-title {
+        min-height: 35px; font-size: 1.1em; display: flex; align-items: center;
+        justify-content: center; margin-bottom: 5px; text-align: center;
+    }
+
+    .resized-image { /* Applies to Input, Heatmap, Material Mask */
+        width: var(--element-size); height: var(--element-size);
+        object-fit: contain; border: 1px solid #eee;
+    }
+
+    .material-section { /* Section containing material info */
+         width: 100%; /* Takes full width available in .left-content */
+         margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;
+    }
+     .material-title { 
+         font-size: 1.2em; 
+         margin-bottom: 5px; 
+         text-align: center; /* Force center alignment */
+         width: 100%; 
+     }
+
+    .material-recognition { /* Container for mask image + table */
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center; /* Center the items (image container + table) horizontally */
+        align-items: center;
+        width: 100%;
+        margin-top: 10px;
+        gap: 15px;
+    }
+
+     .material-image-container { /* Container specifically for mask image + caption */
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* Center image and caption within */
+        width: var(--element-size);
+        margin-left: 300px;
+        /* margin-left: 30px; */ /* REMOVED explicit margin */
+    }
+    .material-image-container small { /* Caption below mask image */
+        margin-top: 5px; font-size: 0.8em; color: #555;
+        display: block; /* Ensure it takes its own line */
+        width: 100%; /* Take width of container */
+        text-align: center; /* Center the text */
+    }
+
+    .material-table {
+        width: auto; max-width: var(--element-size); min-width: 200px;
+        border-collapse: collapse; align-self: center; margin-top: 10px;
+    }
+    .material-table th, .material-table td { border: 1px solid #ddd; padding: 5px; text-align: left; font-size: 0.85em; }
+    .material-table th { background-color: #f2f2f2; font-weight: bold; }
+    .material-table tr:nth-child(even) { background-color: #f9f9f9; }
+    .material-table tr:hover { background-color: #f1f1f1; }
+
+    /* --- Styles for Chat, Modal, Stats, Architectural Elements, Responsive --- */
+    /* --- (Keep all these styles as they were in the previous version) --- */
+    /* Chat Styles */
+    .chat-sidebar { flex: 1; min-width: 400px; max-width: 800px; position: sticky; top: 20px; height: calc(100vh - 40px); display: flex; flex-direction: column; }
+    .chat-sidebar h2 { margin-bottom: 10px; text-align: center; }
+    #chatWindow { flex-grow: 1; overflow-y: auto; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; background: white; padding: 10px; text-align: left; }
+    #chatWindow p { margin: 8px 0; padding: 8px; border-radius: 4px; word-wrap: break-word; }
+    #chatWindow p.system { background: #f0f0f0; color: #666; font-style: italic; }
+    #chatWindow p.assistant { background: #e8f5e9; }
+    #chatWindow p.user { background: #e3f2fd; }
+    .chat-input-container { display: flex; gap: 10px; margin-top: 10px; }
+    #chatInput { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+    .chat-input-container button { margin-top: 0; }
+    .confidence-indicator { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; margin-left: 10px; }
+    .confidence-high { background-color: #4CAF50; color: white; }
+    .confidence-medium { background-color: #FFA726; color: white; }
+    .confidence-low { background-color: #EF5350; color: white; }
+    .uncertainty-notes { font-size: 0.85em; color: #666; margin-top: 8px; padding-left: 10px; border-left: 3px solid #ddd; }
+    /* Modal Styles */
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); padding-top: 60px; }
+    .modal-content { background-color: #fefefe; margin: 5% auto; padding: 30px; border: 1px solid #888; width: 80%; max-width: 1200px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .modal-content h2 { text-align: center; margin-top: 0; color: #333; margin-bottom: 15px; }
+    .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
+    .close:hover, .close:focus { color: black; text-decoration: none; cursor: pointer; }
+    /* Stats Container/Button Styling */
+    .stats-container { width: 100%; margin: 20px 0; padding: 15px; border-radius: 8px; background: #f8f9fa; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+    .stats-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; font-size: 0.95em; margin-top: 0; }
+    .stats-button:hover { background: #45a049; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .stats-info { font-size: 0.85em; color: #666; margin-top: 8px; }
+    .stats-icon { width: 18px; height: 18px; }
+    .stats-description { color: #666; line-height: 1.6; margin: 15px 0; text-align: center; font-size: 0.95em; }
+    /* Architectural Elements */
+    .architectural-elements { margin-top: 30px; padding: 20px; background-color: #f9f9f9; border-radius: 8px; width: 100%; border-top: 1px solid #eee; }
+    .architectural-elements h2 { text-align: center; color: #4CAF50; margin-bottom: 15px; font-size: 1.2em; }
+    .architectural-elements .section-description { margin-bottom: 30px; font-size: 0.85em; }
+    .elements-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; padding: 0 10px; }
+    .element-card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; }
+    .element-card h3 { text-align: center; padding: 10px; margin: 0; background-color: #f0f0f0; font-size: 1em; color: #333; }
+    .element-content { padding: 15px; flex-grow: 1; }
+    .element-image { width: 100%; height: 180px; overflow: hidden; border-radius: 4px; margin-bottom: 15px; }
+    .element-image img { width: 100%; height: 100%; object-fit: cover; }
+    .similar-segments h4 { color: #4CAF50; margin: 15px 0 10px 0; font-size: 0.95em; }
+    .similar-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+    .similar-item { border-radius: 4px; overflow: hidden; background: #f5f5f5; border: 1px solid #eee; }
+    .segment-image { height: 90px; overflow: hidden; display: block; }
+    .segment-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; display: block; }
+    .segment-image img:hover { transform: scale(1.1); }
+    .segment-info { padding: 6px; background: white; font-size: 0.75em; }
+    .segment-info span { display: block; line-height: 1.3; }
+    .similarity-score { color: #4CAF50; font-weight: bold; }
+    .country { color: #666; }
+    /* Navigation Button Styling */
+    .button-group { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; width: 100%; text-align: center; }
+    /* Responsive Adjustments */
+    @media (max-width: 992px) {
+        .main-content-wrapper { flex-direction: column; align-items: center; }
+        .left-content { min-width: unset; width: 100%; order: 1; }
+        .chat-sidebar { position: relative; top: unset; width: 100%; max-width: 800px; height: 60vh; order: 2; margin-top: 30px; }
+    }
+     @media (max-width: 768px) {
+         :root { /* --element-size: 280px; */ }
+         .image-row { flex-direction: column; align-items: center; gap: 20px; }
+         .chart-container-wrapper { margin-top: 20px; width: 90%; }
+          .image-container { width: 90%; }
+         .resized-image { width: 100%; height: auto; }
+         .material-recognition { flex-direction: column; gap: 20px; }
+          .material-image-container { width: 90%; }
+         .material-table { width: 80%; max-width: none; }
+         .elements-grid { grid-template-columns: 1fr; }
+         .similar-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+     }
+      @media (max-width: 480px) {
+         :root { --element-size: 260px; --chart-height: calc(var(--element-size) * 0.85); }
+         h1.main-title { font-size: 1.5em; }
+         h2 { font-size: 1.1em; }
+         .elements-grid { grid-template-columns: 1fr; gap: 15px; }
+         .element-image { height: 160px; }
+         .similar-grid { grid-template-columns: repeat(2, 1fr); }
+     }
+
+</style>

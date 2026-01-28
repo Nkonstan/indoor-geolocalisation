@@ -3,7 +3,6 @@ data/
 
 save_binarycodes_paths_labels_new/
 segmentations/
-static/
 sam_vit_h_4b8939.pth
 segmentation_features_dhn.csv
 
