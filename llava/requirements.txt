@@ -1,9 +1,0 @@
-transformers
-flask
-Pillow
-torch
-torchvision
-opencv-python
-matplotlib
-numpy
-scipy

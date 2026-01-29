@@ -449,7 +449,8 @@ class ModelService:
 
     def invoke_llava_model(self, args):
         """Enhanced LLaVA model invocation with proper cleanup"""
-        from llava.eval.run_llava import eval_model_with_global_model  # Add this import
+        # from llava.eval.run_llava import eval_model_with_global_model  # Add this import
+        from app.utils.llava_utils import eval_model_with_global_model
         try:
             # ADDED: Force cleanup before LLaVA
             # self._unload_current_model()

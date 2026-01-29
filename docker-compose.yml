@@ -1,8 +1,8 @@
 services:
   mongodb_migration:
-    # build:
-    #   context: .
-    #   dockerfile: Dockerfile.migration
+    build:
+      context: .
+      dockerfile: Dockerfile.migration
     image: geo_datamigration
     container_name: vanguard-certh-mcag-migration
     volumes:
@@ -24,10 +24,10 @@ services:
 
 
   llava_app:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-    image: llava_app  # Use the pre-built image
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: llava_app  
     container_name: mca-g-llava-app
     restart: unless-stopped 
     init: true
@@ -77,9 +77,9 @@ services:
       - default
 
   materobot:
-    # build:
-    #   context: ./MATERobot
-    #   dockerfile: Dockerfile.materobot
+    build:
+      context: ./MATERobot
+      dockerfile: Dockerfile.materobot
     container_name: mca-g-materobot
     image: materobot_app
     restart: unless-stopped 
@@ -107,9 +107,9 @@ services:
     command: ["conda", "run", "-n", "materobot_env", "--no-capture-output", "python3", "-u", "materobot_app.py"]
 
   langsam:
-    # build:
-    #   context: .
-    #   dockerfile: LangSAM/Dockerfile.langsam
+    build:
+      context: ./LangSAM
+      dockerfile: Dockerfile.langsam
     container_name: mca-g-langsam
     image: langsam_app
     restart: unless-stopped 

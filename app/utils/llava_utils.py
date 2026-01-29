@@ -3,6 +3,129 @@ import torch
 import gc
 from llava.mm_utils import get_model_name_from_path
 
+
+import argparse
+import torch
+import requests
+from PIL import Image
+from io import BytesIO
+import re
+from llava.constants import (
+    IMAGE_TOKEN_INDEX,
+    DEFAULT_IMAGE_TOKEN,
+    DEFAULT_IM_START_TOKEN,
+    DEFAULT_IM_END_TOKEN,
+    IMAGE_PLACEHOLDER,
+)
+from llava.conversation import conv_templates, SeparatorStyle
+from llava.mm_utils import (
+    process_images,
+    tokenizer_image_token,
+    get_model_name_from_path,
+)
+
+# --- Helper Functions from your script ---
+
+def image_parser(args):
+    out = args.image_file.split(args.sep)
+    return out
+
+def load_image(image_file):
+    if image_file.startswith("http") or image_file.startswith("https"):
+        response = requests.get(image_file)
+        image = Image.open(BytesIO(response.content)).convert("RGB")
+    else:
+        image = Image.open(image_file).convert("RGB")
+    return image
+
+def load_images(image_files):
+    out = []
+    for image_file in image_files:
+        image = load_image(image_file)
+        out.append(image)
+    return out
+
+# --- Main Logic Function ---
+
+def eval_model_with_global_model(args, global_model, global_tokenizer, global_image_processor, model_name):
+    # Use the globally loaded model, tokenizer, and image processor
+    model = global_model
+    tokenizer = global_tokenizer
+    image_processor = global_image_processor
+
+    qs = args.query
+    image_token_se = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN
+    
+    # Handle Image Placeholders
+    if IMAGE_PLACEHOLDER in qs:
+        if model.config.mm_use_im_start_end:
+            qs = re.sub(IMAGE_PLACEHOLDER, image_token_se, qs)
+        else:
+            qs = re.sub(IMAGE_PLACEHOLDER, DEFAULT_IMAGE_TOKEN, qs)
+    else:
+        if model.config.mm_use_im_start_end:
+            qs = image_token_se + "\n" + qs
+        else:
+            qs = DEFAULT_IMAGE_TOKEN + "\n" + qs
+
+    # Determine Conversation Mode
+    if "llama-2" in model_name.lower():
+        conv_mode = "llava_llama_2"
+    elif "mistral" in model_name.lower():
+        conv_mode = "mistral_instruct"
+    elif "v1.6-34b" in model_name.lower():
+        conv_mode = "chatml_direct"
+    elif "v1" in model_name.lower():
+        conv_mode = "llava_v1"
+    elif "mpt" in model_name.lower():
+        conv_mode = "mpt"
+    else:
+        conv_mode = "llava_v0"
+
+    if args.conv_mode is not None and conv_mode != args.conv_mode:
+        print(f"[WARNING] the auto inferred conversation mode is {conv_mode}, while `--conv-mode` is {args.conv_mode}, using {args.conv_mode}")
+    else:
+        args.conv_mode = conv_mode
+
+    conv = conv_templates[args.conv_mode].copy()
+    conv.append_message(conv.roles[0], qs)
+    conv.append_message(conv.roles[1], None)
+    prompt = conv.get_prompt()
+
+    # Process Images
+    image_files = image_parser(args)
+    images = load_images(image_files)
+    image_sizes = [x.size for x in images]
+    
+    images_tensor = process_images(
+        images,
+        image_processor,
+        model.config
+    ).to(model.device, dtype=torch.float16)
+
+    input_ids = (
+        tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt")
+        .unsqueeze(0)
+        .to(model.device)
+    )
+
+    # Run Generation
+    with torch.inference_mode():
+        output_ids = model.generate(
+            input_ids,
+            images=images_tensor,
+            image_sizes=image_sizes,
+            do_sample=True if args.temperature > 0 else False,
+            temperature=args.temperature,
+            top_p=args.top_p,
+            num_beams=args.num_beams,
+            max_new_tokens=args.max_new_tokens,
+            use_cache=True,
+        )
+
+    outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+    return outputs
+
 logger = logging.getLogger(__name__)
 
 
@@ -170,47 +293,7 @@ class PromptGenerator:
         Final Country Prediction: [Based on BOTH the AI image analysis AND your visual assessment, you MUST provide your final country prediction. ONLY THE COUNTRY NAME, NO ADDITIONAL EXPLANATION]
         """
 
-    # @staticmethod
-    # def get_traffic_sign_analysis_prompt(system_context, user_message):
-    #     return f"""AI image analysis:{system_context}
-    #
-    #     CRITICAL OCR MISSION: Your primary task is to correctly identify the ALPHABET SYSTEM and TEXT on this traffic sign.
-    #
-    #     1. ALPHABET IDENTIFICATION FIRST:
-    #        • Greek: Λ Δ Σ Ω Θ Ε Ρ (Example: "ΑΘΗΝΑ", "ΛΑΜΙΑ")
-    #        • Cyrillic: Я Ж Ц Ш Щ Ъ Ь (Example: "МОСКВА")
-    #        • Latin: A-Z with variations
-    #
-    #     2. CHARACTER VERIFICATION:
-    #        • Report ONLY characters you can verify with 100% certainty
-    #        • NEVER list more than 10 items total
-    #        • If text is present but unclear, state "Text visible but cannot be reliably transcribed"
-    #
-    #     3. SIGN ANALYSIS:
-    #        • Color: Identify exact background/text colors
-    #        • Shape: Note overall sign shape and border
-    #        • Symbols: Describe arrows, route numbers, pictograms
-    #
-    #     ⚠️ CRITICAL ANTI-HALLUCINATION RULE ⚠️
-    #     NEVER generate lists longer than 10 items. If you see multiple similar items (like route numbers),
-    #     mention only 2-3 examples followed by "and similar items" rather than listing all of them.
-    #
-    #     User Question: {user_message}
-    #
-    #     ⚠️ CRITICAL FORMAT RULE ⚠️
-    #     You MUST use this EXACT format in your response (including markers, bullet points and ALL sections):
-    #
-    #     Response: [Your answer here. If for something that you are asked you don't have enough clues you must indicate it]
-    #
-    #     Uncertainty Analysis:
-    #
-    #     - ALTERNATIVES: [Other potential interpretations that could lead your evidence into misinterpretation]
-    #     - LIMITATIONS: [Factors that may affect your answer, such as image quality, ambiguous elements, cultural overlaps etc]
-    #
-    #     Confidence Level Assessment: [ONLY USE 'High', 'Medium', or 'Low', NO ADDITIONAL EXPLANATION]
-    #
-    #     Final Country Prediction: [Based on BOTH the AI image analysis AND your visual assessment, you MUST provide your final country prediction. ONLY THE COUNTRY NAME, NO ADDITIONAL EXPLANATION]
-    #     """
+
 
     @staticmethod
     def get_traffic_sign_prompt(country):
@@ -253,40 +336,7 @@ class PromptGenerator:
 
         return system_context, user_message
 
-    # @staticmethod
-    # def get_traffic_sign_prompt(country):
-    #     """
-    #     Generate specialized traffic sign prompt with enhanced context
-    #     """
-    #     system_context = "You are an expert in European traffic signs analysis."
-    #
-    #     user_message = f"""Analyze this traffic sign to determine if it aligns with {country}'s signage.
-    #
-    #     **Domain Knowledge (MUST CONSIDER):**
-    #     - Vienna Convention standards:
-    #       • Warning: Red-bordered triangles
-    #       • Prohibitory: Red-bordered circles
-    #       • Mandatory: Blue circles
-    #     - Primary differentiators: Language text > symbols > color shades
-    #
-    #     **Country-Specific Context for {country}:**
-    #     {PromptGenerator._get_country_context(country)}
-    #
-    #     **Analysis Protocol:**
-    #     1. Text Analysis (IF PRESENT):
-    #        - Language: Verify characters match {country}'s official language(s)
-    #        - Font: Note distinctive national font characteristics
-    #     2. Visual Elements:
-    #        • Shape: Compare to Vienna Convention standards
-    #        • Colors: Use precise terminology (e.g., Pantone 485C red)
-    #        • Symbols: Describe EXACTLY without interpretation
-    #     3. Unique {country} Features Check
-    #
-    #     **Absolute Restrictions:**
-    #     - NO text interpretation unless 100% character certainty
-    #     - NO symbol guessing - describe only visible elements"""
-    #
-    #     return system_context, user_message
+
 
     @staticmethod
     def _get_country_context(country):
