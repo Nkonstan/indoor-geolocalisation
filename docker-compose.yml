@@ -131,6 +131,7 @@ services:
       - ./models/grounding-dino-base:/app/grounding-dino-base
       - ./data/input/segmentations:/app/segmentations
       - ./LangSAM/app.py:/app/app.py
+      - ./LangSAM/langsam_logic.py:/app/langsam_logic.py
       - ./LangSAM/Dockerfile.langsam:/app/Dockerfile.langsam
       - ./LangSAM/requirements.txt:/app/requirements.txt
     depends_on:
