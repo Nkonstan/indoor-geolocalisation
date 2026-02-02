@@ -36,7 +36,7 @@ The system is built as a set of Dockerized microservices orchestrated via `docke
 
 * **Broad Classification Support:** The implementation supports classification across **14 countries** spanning Europe, Asia, and Latin America (see *Supported Countries* below).
 * **Interpretable Geolocation:** Instead of just a country label, the system provides a breakdown of *why* a location was predicted based on architectural evidence.
-* **Material Analysis:** Quantifies material usage (e.g., "High wood usage typical of Central Europe").
+* **Material Analysis:** Quantifies material usage.
 * **Architectural Segmentation:** Identifies key elements and compares them against a large database of curated elements.
 * **Interactive Chat:** Users can ask follow-up questions about the image (e.g., "Why is this not France?") via the LLaVA-integrated interface.
 
@@ -134,9 +134,6 @@ docker compose up --build -d
 ### API Endpoints (`main.py`)
 
 * **`POST /process`**: Main pipeline entry point. Upload an image to get the full analysis (Prediction + Reliability + Context).
-* **`POST /llava-interpret`**: Send a specific prompt to the VLM regarding an uploaded image.
-* *Payload:* `{"image_base64": "...", "prompt_type": "general"}`
-
 
 * **`POST /send_message`**: Conversational endpoint for the chat interface.
 
