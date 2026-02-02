@@ -37,4 +37,7 @@ ENV/
 .idea/
 .idea_*/
 
+.env
+
+
 filter_env/

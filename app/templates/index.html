@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Indoor Geolocation Forensics</title>
+    
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* Extra styling for the unified page layout */
+        .upload-section {
+            background: #f8f9fa;
+            padding: 30px 0;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 30px;
+        }
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="sr-only">Loading...</span>
+    </div>
+    <h3 class="mt-3 text-primary">Running Multi-Source Forensic Analysis...</h3>
+    <p class="text-muted">Analyzing Materials • Segmenting Architecture • Querying VLM</p>
+    <p class="text-muted small">This may take up to 30 seconds.</p>
+</div>
+
+<div class="upload-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10 text-center">
+                <h2 class="mb-3"><i class="fas fa-search-location"></i> Image-Based Indoors Geolocalisation</h2>
+                <p class="text-muted mb-4">Upload an indoor image to analyze its location, materials, and architectural elements.</p>
+                
+                <form id="uploadForm" action="{{ url_for('main.process_image') }}" method="post" enctype="multipart/form-data" class="form-inline justify-content-center">
+                    <div class="form-group mb-2">
+                        <label for="image" class="sr-only">Select image</label>
+                        <input type="file" name="image" id="image" class="form-control-file" accept="image/*" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary mb-2 ml-3">
+                        <i class="fas fa-bolt"></i> Analyze Image
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if error %}
+<div class="container">
+    <div class="alert alert-danger" role="alert">
+        <strong>Error processing image:</strong> {{ error }}
+    </div>
+</div>
+{% endif %}
+
+{% if prediction_message %}
+    <div class="container mb-5">
+        <hr>
+        
+        <div class="main-content-wrapper">
+
+            <div class="left-content">
+
+                <div class="image-row">
+                    <div class="image-container"> <h2 class="image-title">Investigation Image</h2>
+                        <img id="inputImage" src="{{ url_for('static', filename=image_path.replace('static/', '')) }}"
+                                alt="Uploaded Image" class="resized-image">
+                    </div>
+                    <div class="image-container"> <h2 class="image-title">Geolocation Model Heatmap</h2>
+                            <p class="section-description" style="margin-bottom: 5px; width: 100%;">The highlighted areas influence the model's prediction the most.</p>
+                        <img src="{{ url_for('static', filename=attention_map_path.replace('static/', '')) }}"
+                                alt="Attention Map" class="resized-image">
+                    </div>
+                    <div class="chart-container-wrapper"> <h2 class="image-title">Geolocation Model Predictions</h2>
+                        <p class="section-description" style="margin-bottom: 5px;">Location estimates from our geo-location model.</p>
+                        <div class="chart-wrapper">
+                            <div class="chart-container">
+                                <canvas id="continentChart"></canvas>
+                            </div>
+                            <div class="chart-center">
+                                <h4>Top Country Guesses:</h4>
+                                <ul>
+                                    {% for country, score in prediction_message.items() %}
+                                        <li><strong>{{ country }}</strong>: {{ score }}%</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <p class="score-explanation">Scores represent the model's confidence level.</p>
+                        </div>
+                    </div>
+                </div> {% if material_data %}
+                <div class="material-section"> <h2 class="material-title">Material Recognition Model</h2>
+                    <p class="section-description">Materials recognition model with geographical similarity analysis</p>
+
+                    <div class="material-recognition"> <div class="material-image-container"> <img src="{{ url_for('static', filename=material_data.mask_image_path.replace('/static/', '')) }}"
+                                    alt="Material Mask" class="resized-image">
+                            <small style="width: 100%; text-align: center;">Visual mask highlighting detected materials</small>
+                            </div>
+                        <table class="material-table">
+                            <thead>
+                                <tr>
+                                    <th>Detected Materials</th>
+                                    <th>Proportion</th>
+                                    <th>Closest Country</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in material_data.image_materials.split('% ') %}
+                                {% if item %}
+                                {% set parts = item.split(' ') %}
+                                {% set material = parts[0] %}
+                                {% set proportion = parts[1].replace('%', '') %}
+                                <tr>
+                                    <td>{{ material }}</td>
+                                    <td>{{ proportion }}%</td>
+                                    <td>{% if material_data.closest_countries and material_data.closest_countries.get(material) %}{{ material_data.closest_countries.get(material) }}{% else %}-{% endif %}</td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="stats-container">
+                            <button class="stats-button" id="openModal">
+                            <svg class="stats-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 3v18h18"></path>
+                                <path d="M18.4 7.5l-7.8 9L6 12"></path>
+                            </svg>
+                            View Global Material Stats
+                        </button>
+                        <p class="stats-info">
+                            Click to explore the distribution of interior materials across different countries.
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+
+                    {% if segmentation_results %}
+                    <div class="architectural-elements"> <h2>Architectural Elements Analysis</h2>
+                        <p class="section-description">Identifies distinct architectural styles and finds visually similar examples from different countries.</p>
+                        <div class="elements-grid">
+                            {% for element_type, data in segmentation_results.items() %}
+                            <div class="element-card">
+                                <h3>{{ element_type | title }}</h3>
+                                <div class="element-content">
+                                    <div class="element-image">
+                                        <img src="{{ url_for('static', filename=data.cropped_image_path.replace('static/', '')) }}"
+                                            alt="{{ element_type }}" class="segmented-image">
+                                    </div>
+                                    {% if data.get('similar_segments_info') %}
+                                    <div class="similar-segments">
+                                        <h4>Similar Segments Found</h4>
+                                        <div class="similar-grid">
+                                            {% for segment in data.similar_segments_info %}
+                                            <div class="similar-item">
+                                                <div class="segment-image">
+                                                    <img src="{{ url_for('main.serve_segmentations', filename=segment.path) }}"
+                                                        alt="Similar {{ element_type }}">
+                                                </div>
+                                                <div class="segment-info">
+                                                    <span class="similarity-score">Score: {{ "%.2f"|format(segment.score|float) }}</span>
+                                                    <span class="country">{{ segment.country }}</span>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <p style="text-align: center; color: #888; font-size: 0.9em;">No similar segments found.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+            </div> <div class="chat-sidebar"> <h2>Geo-location Assistant</h2>
+                <p class="section-description">The system reviews all model outputs and delivers a final, interpretable prediction. Confidence levels (Low/Medium/High) indicate the reliability of the analysis based on visual evidence strength, regional distinctiveness, and prediction consistency.</p>
+                <div id="chatWindow">
+                    {% if initial_chat %}
+                        {% for message in initial_chat %}
+                            {% if message.role == "system" %}
+                            {% else %}
+                            <div class="assistant-message">
+                                <p class="assistant">
+                                    <strong>Geo-location Assistant:</strong> {% set confidence = message.content.confidence_level | default('Medium') %}
+                                    <span class="confidence-indicator confidence-{{ confidence|lower }}">
+                                        {% if confidence == "High" %}🟢
+                                        {% elif confidence == "Medium" %}🟡
+                                        {% else %}🔴{% endif %}
+                                        {{ confidence }} Confidence
+                                    </span>
+                                    <br>{{ message.content.response | default('No response content.') }}
+                                    <br><br><strong>Final Location Prediction:</strong>
+                                    {% if message.content.predicted_country %}
+                                        {{ message.content.predicted_country }}
+                                    {% else %}
+                                        Not found in analysis
+                                    {% endif %}
+                                    {% if message.content.uncertainty %}
+                                        <div class="uncertainty-notes">Note: {{ message.content.uncertainty }}</div>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" id="chatInput" placeholder="Ask about the analysis...">
+                    <button onclick="sendMessage()">Send</button>
+                </div>
+            </div> </div> <div id="myModal" class="modal"> <div class="modal-content">
+                <span class="close">&times;</span>
+                    <h2>Global Interior Material Distribution</h2>
+                <p class="stats-description">
+                    This visualization shows how different interior materials are distributed across countries,
+                    helping understand regional preferences and design patterns.
+                </p>
+                <img src="/static/material_per_country.png" alt="Material per Country" style="width:100%; display: block; margin-top: 15px;">
+            </div>
+        </div>
+
+        </div>
+{% endif %}
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+<script>
+    document.getElementById('uploadForm').onsubmit = function() {
+        document.getElementById('loadingOverlay').style.display = 'flex';
+    };
+</script>
+
+{% if prediction_message %}
+<script>
+    // Chart.js Script
+    var continentData = {{ continent_percentages | default({}) | tojson | safe }}; 
+    var ctx = document.getElementById('continentChart').getContext('2d');
+    var continentChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(continentData),
+            datasets: [{
+                label: 'Continent Confidence', 
+                data: Object.values(continentData),
+                backgroundColor: [ 'rgba(54, 162, 235, 0.6)', 'rgba(255, 206, 86, 0.6)', 'rgba(75, 192, 192, 0.6)', 'rgba(153, 102, 255, 0.6)', 'rgba(255, 159, 64, 0.6)', 'rgba(255, 99, 132, 0.6)' ],
+                borderColor: [ 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)', 'rgba(255, 99, 132, 1)' ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, 
+            plugins: {
+                legend: { display: true, position: 'top' },
+                title: { display: true, text: 'Continent Prediction Confidence', font: { size: 14, weight: 'bold' } },
+                    tooltip: { callbacks: { label: function(context) { let label = context.label || ''; if (label) { label += ': '; } if (context.parsed !== null) { label += context.parsed.toFixed(1) + '%'; } return label; } } }
+            },
+            cutout: '50%',
+            animation: { duration: 1000, easing: 'easeInOutBounce' }
+        }
+    });
+</script>
+<script>
+    // Modal script
+    var modal = document.getElementById("myModal");
+    var btn = document.getElementById("openModal");
+    var span = document.getElementsByClassName("close")[0];
+    if (btn) { btn.onclick = function() { if(modal) modal.style.display = "block"; } }
+    if (span) { span.onclick = function() { if(modal) modal.style.display = "none"; } }
+    window.onclick = function(event) { if (event.target == modal) { if(modal) modal.style.display = "none"; } }
+</script>
+<script>
+    // Chat Script
+    function initializeChat() {
+        var chatWindow = document.getElementById('chatWindow');
+        if (chatWindow) { chatWindow.scrollTop = chatWindow.scrollHeight; }
+    }
+    function sendMessage() {
+        var chatInput = document.getElementById('chatInput');
+        if (!chatInput) return;
+        var message = chatInput.value;
+        if (!message.trim()) return;
+        chatInput.value = '';
+        displayMessage("You", message);
+        try {
+            fetch('/send_message', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ message: message, image_path: "{{ image_path | default('') | e }}" })
+            })
+            .then(response => { if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); } return response.json(); })
+            .then(data => { console.log("Received data:", data); if (data.reply) { displayMessage("LLaVA", data.reply); } else { console.warn("Received empty reply data."); displayMessage("System", "Received an empty response from the assistant."); } })
+            .catch(error => { console.error('Error fetching or parsing response:', error); displayMessage("System", `Sorry, failed to get response: ${error.message}`); });
+        } catch (error) { console.error('Error initiating fetch:', error); displayMessage("System", `Sorry, there was an error sending your message: ${error.message}`); }
+    }
+    function displayMessage(role, content) {
+        var chatWindow = document.getElementById('chatWindow');
+        if (!chatWindow) return; // Safety check
+
+        var messageElem = document.createElement('div');
+        messageElem.classList.add(role.toLowerCase() + '-message');
+
+        let htmlContent = '';
+        
+        if (role === "LLaVA") {
+            // 1. Extract Data
+            let responseText = (typeof content === 'object' && content.response) ? content.response : content;
+            let confidence = (typeof content === 'object' && content.confidence_level) ? content.confidence_level : "Medium";
+            let notes = (typeof content === 'object' && content.uncertainty) ? content.uncertainty : "";
+            
+            // 2. Determine Emoji
+            let confidenceEmoji = confidence.toLowerCase() === "high" ? "🟢" :
+                                confidence.toLowerCase() === "medium" ? "🟡" : "🔴";
+
+            // 3. Build HTML
+            htmlContent = `
+                <p class="assistant">
+                    <strong>Geo-location Assistant:</strong> 
+                    <span class="confidence-indicator confidence-${confidence.toLowerCase()}">
+                        ${confidenceEmoji} ${confidence} Confidence
+                    </span>
+                    <br>
+                    ${responseText}
+                    ${notes ? `<div class="uncertainty-notes">Note: ${notes}</div>` : ''}
+                </p>`;
+                
+        } else if (role === "System") {
+            htmlContent = `<p class="system"><strong>${role}:</strong> ${content}</p>`;
+        } else { // User
+            htmlContent = `<p class="user"><strong>${role}:</strong> ${content}</p>`;
+        }
+
+        messageElem.innerHTML = htmlContent;
+        chatWindow.appendChild(messageElem);
+        chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
+    }
+    var chatInputElem = document.getElementById('chatInput');
+    if (chatInputElem) { chatInputElem.addEventListener('keypress', function(event) { if (event.key === 'Enter') { event.preventDefault(); sendMessage(); } }); }
+    document.addEventListener('DOMContentLoaded', function() { {% if not error %} initializeChat(); {% endif %} });
+</script>
+{% endif %}
+
+</body>
+</html>

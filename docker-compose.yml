@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile.migration
     image: geo_datamigration
-    container_name: vanguard-certh-mcag-migration
+    container_name: geo-db-migration
     volumes:
       - ./migrate_to_mongodb.py:/app/migrate_to_mongodb.py
       - ./data/input:/app/data
@@ -15,8 +15,6 @@ services:
       - SEGMENTATION_DB_DHN=/app/data/segmentation_features_dhn.csv
       - DB_BINARY_PATH=/app/data/save_binarycodes_paths_labels_new/airbnb_14countries_trainedinwholedata_database_binary.npy
       - DB_LABELS_PATH=/app/data/save_binarycodes_paths_labels_new/airbnb_14countries_trainedinwholedatabase_128bits_0.6296_database_labelspaths.ob
-      # - DB_BINARY_PATH=/app/data/save_binarycodes_paths_labels_new/airbnb_15countries_trainedinwholedata_database_binary.npy
-      # - DB_LABELS_PATH=/app/data/save_binarycodes_paths_labels_new/airbnb_15countries_trainedinwholedatabase_128bits_0.6296_database_labelspaths.ob
     depends_on:
       mongodb:
         condition: service_healthy
@@ -28,7 +26,7 @@ services:
       context: .
       dockerfile: Dockerfile
     image: llava_app  
-    container_name: mca-g-llava-app
+    container_name: geo-llava
     restart: unless-stopped 
     init: true
     runtime: nvidia
@@ -39,6 +37,8 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+    env_file:
+      - .env
     environment:
       - NVIDIA_VISIBLE_DEVICES=0
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
@@ -61,8 +61,8 @@ services:
       - ./data/output/static:/app/static
       - ./app/static/style.css:/app/static/style.css
       - ./data/input/segmentations:/app/segmentations
-      - ./models/hash-models/airbnb_14countries_train_database_128bits_0.6296825813840561:/app/airbnb_14countries_train_database_128bits_0.6296825813840561
-      - ./models/hash-models/DHN_airbnb_14countries_512bits_0.3558918258844033:/app/DHN_airbnb_14countries_512bits_0.3558918258844033
+      - ./models/hash-models/airbnb_14countries_train_database_128bits_0.6296:/app/airbnb_14countries_train_database_128bits_0.6296
+      - ./models/hash-models/DHN_airbnb_14countries_512bits_0.3558:/app/DHN_airbnb_14countries_512bits_0.3558
 
     working_dir: /app
     ports:
@@ -80,7 +80,7 @@ services:
     build:
       context: ./MATERobot
       dockerfile: Dockerfile.materobot
-    container_name: mca-g-materobot
+    container_name: geo-materials
     image: materobot_app
     restart: unless-stopped 
     init: true
@@ -110,7 +110,7 @@ services:
     build:
       context: ./LangSAM
       dockerfile: Dockerfile.langsam
-    container_name: mca-g-langsam
+    container_name: geo-segmentation
     image: langsam_app
     restart: unless-stopped 
     init: true
@@ -139,7 +139,7 @@ services:
 
   mongodb:
     image: mongo:latest
-    container_name: mca-g-mongodb
+    container_name: geo-mongo
     restart: always
     volumes:
       - mongodb_data:/data/db

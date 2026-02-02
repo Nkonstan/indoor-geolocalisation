@@ -5,9 +5,14 @@ import torch
 class Config:
     DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    SECRET_KEY = '4adda9070acf5830ed45b76da140974147304941e9745a58'
+    SECRET_KEY = SECRET_KEY = os.getenv('SECRET_KEY', 'default-dev-key')
+    # API endpoints
+    MATERIAL_RECOGNITION_URL = 'http://materobot:5001/material_recognition'
+
+    LANGSAM_URL = os.getenv('LANGSAM_URL', 'http://langsam:5002/segment')
+
     # MongoDB settings
-    MONGODB_URI = 'mongodb://mongodb:27017/'
+    MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://mongodb:27017/')
     MONGODB_DATABASE = 'geolocation_db'
 
     # MongoDB collection names (add these new settings)
@@ -21,19 +26,10 @@ class Config:
     DEIT_MODEL_PATH = os.getenv('DEIT_MODEL_PATH', '/app/deit-base-distilled-patch16-384')
 
     # Geographical model paths and files
-    GEO_MODEL_PATH = "./airbnb_14countries_train_database_128bits_0.6296825813840561/model.pt"
-    DHN_MODEL_PATH = "./DHN_airbnb_14countries_512bits_0.3558918258844033/model.pt"
+    GEO_MODEL_PATH = "./airbnb_14countries_train_database_128bits_0.6296/model.pt"
+    DHN_MODEL_PATH = "./DHN_airbnb_14countries_512bits_0.3558/model.pt"
 
-    # # Country and continent configurations with Portugal
-    # COUNTRIES = ["Bolivia", "Germany", "Poland", "Pakistan", "Chile",
-    #              "Kazakhstan", "Japan", "Argentina", "Colombia",
-    #              "Norway", "France", "Peru", "Hungary", "KoreaSouth", "Portugal"]
 
-    # CONTINENTS_DICT = {
-    #     "Europe": ["Germany", "Poland", "Norway", "France", "Hungary", "Portugal"],
-    #     "Asia": ["Pakistan", "Kazakhstan", "Japan", "KoreaSouth"],
-    #     "latinAmerica": ["Bolivia", "Chile", "Argentina", "Colombia", "Peru"]
-    # }
 
     # Country and continent configurations without Portugal
     COUNTRIES = ["Bolivia", "Germany", "Poland", "Pakistan", "Chile",
@@ -46,10 +42,7 @@ class Config:
         "latinAmerica": ["Bolivia", "Chile", "Argentina", "Colombia", "Peru"]
     }
 
-    # API endpoints
-    MATERIAL_RECOGNITION_URL = 'http://materobot:5001/material_recognition'
 
-    LANGSAM_URL = os.getenv('LANGSAM_URL', 'http://langsam:5002/segment')
 
     # paths for output data
     FAISS_INDEX_DIR = os.getenv('FAISS_INDEX_DIR', '/app/faiss_indexes') 

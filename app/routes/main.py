@@ -26,63 +26,10 @@ main_bp = Blueprint('main', __name__)
 image_service = ImageService()
 
 
-@main_bp.route('/llava-interpret', methods=['POST'])
-def llava_interpret():
-    try:
-        # Get base64 image and metadata from request
-        data = request.json
-        if not data or 'image_base64' not in data:
-            return jsonify({'error': 'No image provided'}), 400
-
-        image_base64 = data['image_base64']
-        country = data.get('country', 'Unknown')
-        prompt_type = data.get('prompt_type', 'general')
-
-        # Decode base64 image
-        image_data = base64.b64decode(image_base64)
-        # Create temp directory if it doesn't exist
-        temp_dir = '/app/static/temp'
-        os.makedirs(temp_dir, exist_ok=True)
-        # Save temporary image
-        temp_image_path = os.path.join('/app/static/temp', f"temp_{int(time.time())}.jpg")
-        with open(temp_image_path, 'wb') as f:
-            f.write(image_data)
-
-        # Generate appropriate prompt based on the type
-        if prompt_type == 'traffic_sign':
-            system_context, user_message = PromptGenerator.get_traffic_sign_prompt(country)
-            prompt = PromptGenerator.get_analysis_prompt(system_context, user_message)
-            # system_context, user_message = PromptGenerator.get_traffic_sign_prompt(country)
-        elif prompt_type == 'license_plate':
-            system_context, user_message = PromptGenerator.get_license_plate_prompt(country)
-            prompt = PromptGenerator.get_analysis_prompt(system_context, user_message)
-        else:  # general scene analysis
-            system_context, user_message = PromptGenerator.get_outdoor_scene_prompt(country)
-            prompt = PromptGenerator.get_analysis_prompt(system_context, user_message)
-
-        # Generate prompt and get LLaVA response
-        llava_response = LLaVAHandler.get_response(image_service.model_service, prompt, temp_image_path)
-
-        # Parse response
-        parsed_response = ResponseParser.parse_llava_response(llava_response)
-
-        # Clean up temp file
-        os.remove(temp_image_path)
-
-        return jsonify({
-            'interpretation': parsed_response,
-            'country': country,
-            'prompt_type': prompt_type
-        })
-    except Exception as e:
-        logger.error(f"Error in llava-interpret: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-
 # Basic routes
 @main_bp.route('/', methods=['GET'])
 def upload_form():
-    return render_template('upload.html')
+    return render_template('index.html')
 
 @main_bp.route('/static/<path:filename>')
 def serve_static_files(filename):
@@ -143,7 +90,7 @@ def process_image():
             if not file:
                 if request.headers.get('Accept') == 'application/json':
                     return jsonify({'error': 'No file provided'}), 400
-                return render_template('message.html', error='No file provided')
+                return render_template('index.html', error='No file provided')
             gc.collect()
             torch.cuda.empty_cache()
 
@@ -163,18 +110,12 @@ def process_image():
             logger.info("Calling ProcessHelper.parse_predictions...")  
             predictions, (top_country, top_score) = ProcessHelper.parse_predictions(result['prediction_message'])
             logger.info("ProcessHelper returned successfully.")
-            # B. Segmentation Logic (Portugal check)
-            if top_country == 'Portugal':
-                logger.info(f"Portugal detected ({top_score}%) - skipping segmentation")
-                segmentation_results = {}
-            else:
-                segmentation_results = image_service.process_automatic_segmentation(result['image_path'])
-
+            # B. Segmentation Logic 
+            segmentation_results = image_service.process_automatic_segmentation(result['image_path'])
             # C. Encode Images (This modifies state, so we keep it here or move to image_service)
             attention_map_base64, material_mask_base64, segmentation_results = image_service.encode_images_to_base64(
                 result, segmentation_results, reference_data_path
             )
-            
             # D. Format Text & Context using Helper
             segmentation_text = ProcessHelper.format_segmentation_text(segmentation_results)
             country_description = image_service.model_service.config.COUNTRY_DESCRIPTIONS.get(top_country, "")
@@ -232,7 +173,7 @@ def process_image():
         ]
         
         return render_template(
-            'message.html',
+            'index.html',
             message=result['message'],
             image_path=result['image_path'],
             attention_map_path=result['attention_map_path'],
@@ -253,7 +194,7 @@ def process_image():
         if request.headers.get('Accept') == 'application/json':
             return jsonify({'status': 'error', 'error': str(e), 'timing_summary': timer.timings}), 500
 
-        return render_template('message.html', error=str(e), timing_summary=timer.timings)
+        return render_template('index.html', error=str(e), timing_summary=timer.timings)
 
 
 @main_bp.route('/send_message', methods=['POST'])
