@@ -112,7 +112,7 @@ def get_largest_connected_component(segmented_image):
         # Clean up masks immediately
         del largest_mask, largest_mask_3d
         
-        # **SMART CROPPING LOGIC**
+        # **CROPPING LOGIC**
         # First, get the basic bounding box
         non_zero = np.any(result > 10, axis=2)
         rows = np.any(non_zero, axis=1)

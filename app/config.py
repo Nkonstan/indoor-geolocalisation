@@ -15,10 +15,10 @@ class Config:
     MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://mongodb:27017/')
     MONGODB_DATABASE = 'geolocation_db'
 
-    # MongoDB collection names (add these new settings)
-    MONGODB_BINARY_COLLECTION = 'binary_codes'  # for your binary codes
-    MONGODB_PATHS_COLLECTION = 'paths'  # for your paths
-    MONGODB_DHN_COLLECTION = 'segmentation_dhn'  # for DHN segmentation data
+    # MongoDB collection names 
+    MONGODB_BINARY_COLLECTION = 'binary_codes'  
+    MONGODB_PATHS_COLLECTION = 'paths'  
+    MONGODB_DHN_COLLECTION = 'segmentation_dhn'  
 
     # Model path Llava
     MODEL_PATH = '/app/llava-v1.6-mistral-7b'
@@ -28,8 +28,6 @@ class Config:
     # Geographical model paths and files
     GEO_MODEL_PATH = "./airbnb_14countries_train_database_128bits_0.6296/model.pt"
     DHN_MODEL_PATH = "./DHN_airbnb_14countries_512bits_0.3558/model.pt"
-
-
 
     # Country and continent configurations without Portugal
     COUNTRIES = ["Bolivia", "Germany", "Poland", "Pakistan", "Chile",
@@ -41,8 +39,6 @@ class Config:
         "Asia": ["Pakistan", "Kazakhstan", "Japan", "KoreaSouth"],
         "latinAmerica": ["Bolivia", "Chile", "Argentina", "Colombia", "Peru"]
     }
-
-
 
     # paths for output data
     FAISS_INDEX_DIR = os.getenv('FAISS_INDEX_DIR', '/app/faiss_indexes') 
@@ -57,7 +53,6 @@ class Config:
     LLAVA_ANALYSIS_PROMPT = (
         "I want your detailed geo-localization analysis based on all the above AND your final prediction of which country this is. Start with clearly observable features that support the AI location analysis, and end with a specific country prediction."
     )
-
 
  # Add the country descriptions dictionary chatgpt and claude
     COUNTRY_DESCRIPTIONS = {

@@ -18,7 +18,7 @@ import sys
 import itertools
 from app.services.model_service import ModelService
 from app.services.database_service import DatabaseService
-from app.utils.gpu_utils import gpu_memory_manager  # Add this import
+from app.utils.gpu_utils import gpu_memory_manager  
 from app.utils.logging import setup_logging
 from flask import current_app
 

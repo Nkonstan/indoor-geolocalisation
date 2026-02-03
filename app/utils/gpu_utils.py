@@ -6,7 +6,7 @@ import logging
 from typing import Optional
 import time
 import sys
-# logger = logging.getLogger(__name__)
+
 setup_logging()
 logger = logging.getLogger(__name__)
 
@@ -20,10 +20,6 @@ def gpu_memory_manager():
             torch.cuda.synchronize()
             torch.cuda.empty_cache()
             gc.collect()
-            # Log initial memory state
-            # logger.debug(f"GPU Memory Status - Before operation: "
-            #              f"Allocated: {torch.cuda.memory_allocated() / 1e9:.2f}GB, "
-            #              f"Reserved: {torch.cuda.memory_reserved() / 1e9:.2f}GB")
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(f"GPU Memory Status - Before operation: "
                              f"Allocated: {torch.cuda.memory_allocated() / 1e9:.2f}GB, "
@@ -54,3 +50,14 @@ def gpu_memory_manager():
                            f"Reserved: {torch.cuda.memory_reserved() / 1e9:.2f}GB")
             except Exception as e:
                 logger.error(f"GPU cleanup failed: {e}")
+
+def cleanup_gpu_memory():
+    """Cleanup GPU memory - call at end of requests only."""
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                f"GPU: {torch.cuda.memory_allocated() / 1e9:.2f}GB allocated, "
+                f"{torch.cuda.memory_reserved() / 1e9:.2f}GB reserved"
+            )

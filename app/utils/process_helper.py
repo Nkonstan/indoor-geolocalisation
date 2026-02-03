@@ -38,7 +38,6 @@ class ProcessHelper:
             return predictions, (top_country_name, top_score_val)
 
         except Exception as e:
-            # This log will tell us exactly why it failed if it happens again
             logger.error(f"ProcessHelper Error: {str(e)}")
             raise e
 
@@ -68,8 +67,7 @@ class ProcessHelper:
     @staticmethod
     def build_system_context(result, predictions, top_country_tuple, segmentation_text, country_description):
         """
-        Reconstructs the system_context EXACTLY as it appeared in the original code.
-        Includes exact whitespace/indentation and excludes unused material matches.
+        Constructs the system_context.
         """
         top_country_name, top_score = top_country_tuple
         

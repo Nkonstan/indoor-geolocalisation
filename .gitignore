@@ -18,7 +18,7 @@ segmentation_features_dhn.csv
 *.zip
 *.tar.gz
 
-# Model / data binaries you don't want in Git
+# Model / data binaries
 *.safetensors
 *.npy
 *.npz
@@ -38,6 +38,5 @@ ENV/
 .idea_*/
 
 .env
-
 
 filter_env/

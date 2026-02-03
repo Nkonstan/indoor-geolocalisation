@@ -17,6 +17,7 @@ from app.utils.timing_utils import ProcessTimer
 from app.utils.logging import setup_logging
 from app.utils.llava_utils import log_memory_usage, LLaVAHandler, ResponseParser, PromptGenerator
 from app.utils.process_helper import ProcessHelper
+from app.utils.gpu_utils import cleanup_gpu_memory
 from app.config import Config
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -52,17 +53,11 @@ def predict_image_top():
             file = request.files['image']
             if not file:
                 return jsonify({'error': 'No file provided'}), 400
-                
-            gc.collect()
-            torch.cuda.empty_cache()
             
             result = image_service.process_image(file)
             
             # --- Use Helper ---
             predictions, (top_country, top_score) = ProcessHelper.parse_predictions(result['prediction_message'])
-
-            gc.collect()
-            torch.cuda.empty_cache()
             
             return jsonify({
                 'status': 'success',
@@ -75,10 +70,9 @@ def predict_image_top():
             })
     except Exception as e:
         logger.error(f"Error getting top prediction: {str(e)}")
-        gc.collect()
-        torch.cuda.empty_cache()
         return jsonify({'status': 'error', 'error': str(e)}), 500
-
+    finally:
+        cleanup_gpu_memory()
 
 @main_bp.route('/process', methods=['POST'])
 def process_image():
@@ -91,25 +85,19 @@ def process_image():
                 if request.headers.get('Accept') == 'application/json':
                     return jsonify({'error': 'No file provided'}), 400
                 return render_template('index.html', error='No file provided')
-            gc.collect()
-            torch.cuda.empty_cache()
 
         # [Step 1] Geographic Processing
         with timer.time_process("Geographic Processing"):
             with torch.no_grad():
                 result = image_service.process_image(file)
             del file
-            gc.collect()
-            torch.cuda.empty_cache()
 
         # [Step 2] Segmentation & Data Formatting
         reference_data_path = Config.SEGMENTATION_REFERENCE_PATH
         
         with timer.time_process("Segmentation Processing"):
             # A. Parse Predictions using Helper
-            logger.info("Calling ProcessHelper.parse_predictions...")  
             predictions, (top_country, top_score) = ProcessHelper.parse_predictions(result['prediction_message'])
-            logger.info("ProcessHelper returned successfully.")
             # B. Segmentation Logic 
             segmentation_results = image_service.process_automatic_segmentation(result['image_path'])
             # C. Encode Images (This modifies state, so we keep it here or move to image_service)
@@ -127,9 +115,6 @@ def process_image():
             logger.info(f"system_context: ({system_context})")
 
         # [Step 3] LLaVA Processing
-        gc.collect()
-        torch.cuda.empty_cache()
-        
         with timer.time_process("LLaVA Processing"):
             try:
                 with torch.no_grad():
@@ -139,14 +124,10 @@ def process_image():
                     args = LLaVAHandler.create_args(image_service.model_service, initial_prompt, result['image_path'])
                     initial_llava_response = image_service.model_service.invoke_llava_model(args)
                     del args, initial_prompt
-                    torch.cuda.empty_cache()
                 parsed_response = ResponseParser.parse_llava_response(initial_llava_response)
             except Exception as e:
                 logger.error(f"Error in LLaVA processing: {str(e)}")
                 parsed_response = {"response": "Error processing LLaVA", "confidence_level": "Low", "uncertainty": str(e)}
-            finally:
-                gc.collect()
-                torch.cuda.empty_cache()
 
         # [Step 4] Response
         timer.print_summary()
@@ -195,7 +176,8 @@ def process_image():
             return jsonify({'status': 'error', 'error': str(e), 'timing_summary': timer.timings}), 500
 
         return render_template('index.html', error=str(e), timing_summary=timer.timings)
-
+    finally:
+        cleanup_gpu_memory()
 
 @main_bp.route('/send_message', methods=['POST'])
 def send_message():
@@ -226,8 +208,7 @@ def send_message():
         # Get parsed response
         parsed_response = ResponseParser.parse_llava_response(llava_response)
 
-        # --- CHANGE START ---
-        # We DO NOT format the string here anymore. We send raw data.
+        # We DO NOT format the string here. We send raw data.
         return jsonify({
             "reply": {
                 "response": parsed_response['response'], # Raw text only
@@ -236,7 +217,6 @@ def send_message():
                 "status": "success"
             }
         })
-        # --- CHANGE END ---
 
     except Exception as e:
         logger.error(f"Error in send_message: {str(e)}")
@@ -248,3 +228,5 @@ def send_message():
                 "status": "error"
             }
         })
+    finally:
+        cleanup_gpu_memory()

@@ -8,7 +8,6 @@ import sys
 import os
 from time import sleep
 
-# Setup basic logging if app.utils.logging is not available
 try:
     from app.utils.logging import setup_logging
     setup_logging()
@@ -24,11 +23,8 @@ logger = logging.getLogger(__name__)
 MONGODB_URI = os.environ.get('MONGODB_URI', 'mongodb://localhost:27017/')
 MONGODB_DATABASE = os.environ.get('MONGODB_DATABASE', 'geolocation_db')
 SEGMENTATION_DB_DHN = os.environ.get('SEGMENTATION_DB_DHN', 'segmentation_features_dhn.csv')
-# SEGMENTATION_DB_HASHNET = os.environ.get('SEGMENTATION_DB_HASHNET', 'segmentation_features_hashnet.csv')
-# DB_BINARY_PATH = os.environ.get('DB_BINARY_PATH', './save_binarycodes_paths_labels_new/airbnb_14countries_trainedinwholedata_database_binary.npy')
 DB_BINARY_PATH = os.environ.get('DB_BINARY_PATH', './save_binarycodes_paths_labels_new/airbnb_15countries_trainedinwholedata_database_binary.npy')
 
-# DB_LABELS_PATH = os.environ.get('DB_LABELS_PATH', './save_binarycodes_paths_labels_new/airbnb_14countries_trainedinwholedatabase_128bits_0.6296_database_labelspaths.ob')
 DB_LABELS_PATH = os.environ.get('DB_LABELS_PATH', './save_binarycodes_paths_labels_new/airbnb_15countries_trainedinwholedatabase_128bits_0.6296_database_labelspaths.ob')
 
 MAX_RETRIES = int(os.environ.get('MAX_RETRIES', '3'))
@@ -49,7 +45,6 @@ def verify_input_files():
     """Verify all required input files exist"""
     required_files = [
         SEGMENTATION_DB_DHN,
-        # SEGMENTATION_DB_HASHNET,
         DB_BINARY_PATH,
         DB_LABELS_PATH
     ]
@@ -123,7 +118,6 @@ def migrate_data():
 
             # Perform migrations
             migrate_segmentation_data(db, SEGMENTATION_DB_DHN, 'segmentation_dhn')
-            # migrate_segmentation_data(db, SEGMENTATION_DB_HASHNET, 'segmentation_hashnet')
             migrate_binary_data(db)
 
             logger.info("Migration completed successfully!")
