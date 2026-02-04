@@ -156,7 +156,6 @@ class ImageService:
                 # Clean up image processing resources
                 del image, file_bytes, file_content
                 # Switch to geo model only once
-                self.model_service.switch_model('geo')
                 # Geographic predictions phase
                 with torch.no_grad():
                     prediction_message, attention_map_path = self.model_service.base_predictor(
@@ -198,7 +197,6 @@ class ImageService:
             raise
         finally:
             # Single final cleanup
-            self.model_service._unload_current_model()
             torch.cuda.empty_cache()
 
 
@@ -316,13 +314,11 @@ class ImageService:
                 return {}
             except Exception as e:
                 logger.error(f"Error in automatic segmentation: {str(e)}")
-                self.model_service._unload_current_model()
                 return {}
             finally:
                 # Ensure cleanup after processing all targets
                 if 'feature_vectors' in locals():
                     del feature_vectors
-                self.model_service._unload_current_model()
                 torch.cuda.empty_cache()
 
     def get_similar_segments_merged(self, target, query_vec_dhn):
