@@ -63,7 +63,7 @@ def predict_image_top():
                 'status': 'success',
                 'top_prediction': {
                     'country': top_country,
-                    'score': predictions[top_country] # Keep original format string
+                    'score': predictions[top_country] 
                 },
                 'all_predictions': predictions,
                 'timing': timer.timings.get('Top Prediction Request', 0)
@@ -208,7 +208,7 @@ def send_message():
         # Get parsed response
         parsed_response = ResponseParser.parse_llava_response(llava_response)
 
-        # We DO NOT format the string here. We send raw data.
+        # DO NOT format the string here. send raw data.
         return jsonify({
             "reply": {
                 "response": parsed_response['response'], # Raw text only

@@ -3,14 +3,8 @@ from torchvision import models
 import torch
 from transformers import DeiTModel
 
-
-
-
 resnet_dict = {"ResNet18": models.resnet18, "ResNet34": models.resnet34, "ResNet50": models.resnet50,
                "ResNet101": models.resnet101, "ResNet152": models.resnet152}
-
-
-
 
 class ResNet(nn.Module):
     def __init__(self, hash_bit, res_model="ResNet50", use_pretrained=False):
@@ -37,12 +31,7 @@ class ResNet(nn.Module):
         x = self.feature_layers(x)
         x = x.view(x.size(0), -1)
         y = self.hash_layer(x)
-        # import pdb; pdb.set_trace();
         return y
-        
-# from transformers import ViTModel
-
-
         
 
 

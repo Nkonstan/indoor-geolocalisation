@@ -1,6 +1,6 @@
 import os
 import torch
-
+ 
 
 class Config:
     DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -26,8 +26,8 @@ class Config:
     DEIT_MODEL_PATH = os.getenv('DEIT_MODEL_PATH', '/app/deit-base-distilled-patch16-384')
 
     # Geographical model paths and files
-    GEO_MODEL_PATH = "./airbnb_14countries_train_database_128bits_0.6296/model.pt"
-    DHN_MODEL_PATH = "./DHN_airbnb_14countries_512bits_0.3558/model.pt"
+    GEO_MODEL_PATH = os.environ.get('GEO_MODEL_PATH')
+    DHN_MODEL_PATH = os.environ.get('DHN_MODEL_PATH')
 
     # Country and continent configurations without Portugal
     COUNTRIES = ["Bolivia", "Germany", "Poland", "Pakistan", "Chile",

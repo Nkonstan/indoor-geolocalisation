@@ -8,13 +8,13 @@ services:
     volumes:
       - ./migrate_to_mongodb.py:/app/migrate_to_mongodb.py
       - ./data/input:/app/data
-    working_dir: /app
+    working_dir: /app 
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/
       - MONGODB_DATABASE=geolocation_db
       - SEGMENTATION_DB_DHN=/app/data/segmentation_features_dhn.csv
-      - DB_BINARY_PATH=/app/data/save_binarycodes_paths_labels_new/airbnb_14countries_trainedinwholedata_database_binary.npy
-      - DB_LABELS_PATH=/app/data/save_binarycodes_paths_labels_new/airbnb_14countries_trainedinwholedatabase_128bits_0.6296_database_labelspaths.ob
+      - DB_BINARY_PATH=/app/data/embeddings/geo_14c.npy
+      - DB_LABELS_PATH=/app/data/embeddings/geo_14c_labels.ob
     depends_on:
       mongodb:
         condition: service_healthy
@@ -50,6 +50,8 @@ services:
       - MONGODB_DATABASE=geolocation_db
       - TRANSFORMERS_OFFLINE=1
       - CLIP_MODEL_DIR=/app/clip-vit-large-patch14-336
+      - GEO_MODEL_PATH=./indoor-geoai/model.pt
+      - DHN_MODEL_PATH=./dhn_model_512bits_36/model.pt
     volumes:
       - ./models/llava-v1.6-mistral-7b:/app/llava-v1.6-mistral-7b
       - ./models/deit-base-distilled-patch16-384:/app/deit-base-distilled-patch16-384
@@ -61,8 +63,8 @@ services:
       - ./data/output/static:/app/static
       - ./app/static/style.css:/app/static/style.css
       - ./data/input/segmentations:/app/segmentations
-      - ./models/hash-models/airbnb_14countries_train_database_128bits_0.6296:/app/airbnb_14countries_train_database_128bits_0.6296
-      - ./models/hash-models/DHN_airbnb_14countries_512bits_0.3558:/app/DHN_airbnb_14countries_512bits_0.3558
+      - ./models/hash-models/indoor-geoai:/app/indoor-geoai
+      - ./models/hash-models/dhn_model_512bits_36:/app/dhn_model_512bits_36
 
     working_dir: /app
     ports:

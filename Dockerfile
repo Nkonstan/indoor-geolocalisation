@@ -1,4 +1,3 @@
-# FROM nvidia/cuda:12.2.0-devel-ubuntu20.04
 FROM nvidia/cuda:12.2.0-runtime-ubuntu20.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -33,7 +32,6 @@ RUN git clone https://github.com/haotian-liu/LLaVA.git /app/LLaVA \
     && pip install --upgrade pip \
     && pip install -e .
 
-# COPY llava-v1.6-mistral-7b /app/llava-v1.6-mistral-7b
 COPY requirements.txt /app/
 
 RUN pip install --no-cache-dir -r requirements.txt

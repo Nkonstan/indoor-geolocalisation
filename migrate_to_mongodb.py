@@ -19,22 +19,32 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-# Configuration from environment variables with fallbacks
-MONGODB_URI = os.environ.get('MONGODB_URI', 'mongodb://localhost:27017/')
-MONGODB_DATABASE = os.environ.get('MONGODB_DATABASE', 'geolocation_db')
-SEGMENTATION_DB_DHN = os.environ.get('SEGMENTATION_DB_DHN', 'segmentation_features_dhn.csv')
-DB_BINARY_PATH = os.environ.get('DB_BINARY_PATH', './save_binarycodes_paths_labels_new/airbnb_15countries_trainedinwholedata_database_binary.npy')
+try:
+    # Database Connection
+    MONGODB_URI = os.environ['MONGODB_URI']
+    MONGODB_DATABASE = os.environ['MONGODB_DATABASE']
+    
+    # Data File Paths
+    SEGMENTATION_DB_DHN = os.environ['SEGMENTATION_DB_DHN']
+    DB_BINARY_PATH = os.environ['DB_BINARY_PATH']
+    DB_LABELS_PATH = os.environ['DB_LABELS_PATH']
+    
+    MAX_RETRIES = int(os.environ.get('MAX_RETRIES', '3'))
+    RETRY_DELAY = int(os.environ.get('RETRY_DELAY', '5'))
 
-DB_LABELS_PATH = os.environ.get('DB_LABELS_PATH', './save_binarycodes_paths_labels_new/airbnb_15countries_trainedinwholedatabase_128bits_0.6296_database_labelspaths.ob')
+except KeyError as e:
+    # Print a blocking error message describing exactly what is missing
+    print(f"\n{'='*60}")
+    print(f"CRITICAL CONFIGURATION ERROR: Missing environment variable")
+    print(f"variable name: {e}")
+    print(f"{'='*60}\n")
+    # Exit with status code 1 (indicates failure to Docker/Orchestrator)
+    sys.exit(1)
 
-MAX_RETRIES = int(os.environ.get('MAX_RETRIES', '3'))
-RETRY_DELAY = int(os.environ.get('RETRY_DELAY', '5'))  # seconds
 
-# Rest of your code remains the same
 def check_mongodb_connection(client):
     """Test if MongoDB server is responsive"""
     try:
-        # The ismaster command is cheap and does not require auth
         client.admin.command('ismaster')
         return True
     except ConnectionFailure:
