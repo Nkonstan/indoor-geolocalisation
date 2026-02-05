@@ -65,8 +65,8 @@ While the paper evaluates the methodology on a strict subset of 6 countries, thi
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-org/indoor-geolocation-reliability.git
-cd indoor-geolocation-reliability
+git clone https://github.com/Nkonstan/indoor-geolocalisation.git
+cd indoor-geolocalisation
 
 ```
 
