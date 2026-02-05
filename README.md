@@ -114,12 +114,6 @@ The `hash-models/` directory contains the custom deep hashing networks used for 
 - **Secondary Model**  
   Download: https://huggingface.co/nikokons/dhn_model_512bits_36  
 
-  Place the files in:
-  ```text
-  models/hash-models/indoor-geoai/
-```
-
-
 ### 4. Build and Run
 
 Start the entire stack using Docker Compose:
