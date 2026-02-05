@@ -99,8 +99,26 @@ models/
 ├── grounding-dino-base/         # For LangSAM
 ├── sam-checkpoints/             # SAM weights
 └── hash-models/                 # Custom GeoAI deep hashing models
+    ├── indoor-geoai             # Main geolocation model (14 countries)
+    └── dhn_model_512bits_36     # Secondary deep hashing model
 
 ```
+#### GeoAI Hash Models
+
+The `hash-models/` directory contains the custom deep hashing networks used for indoor image geolocation. Pre-trained weights for these models are hosted on Hugging Face:
+
+- **Indoor GeoAI (Primary Model)**  
+  Deep hashing geolocation model trained on indoor imagery across **14 countries**.  
+  Download: https://huggingface.co/nikokons/indoor-geoai  
+
+- **Secondary Model**  
+  Download: https://huggingface.co/nikokons/dhn_model_512bits_36  
+
+  Place the files in:
+  ```text
+  models/hash-models/indoor-geoai/
+```
+
 
 ### 4. Build and Run
 
