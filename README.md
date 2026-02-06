@@ -1,174 +1,131 @@
 # Multi-Source VLM Fusion for Indoor Geolocation Reliability
 
-This repository contains the official implementation of the paper **"Multi-Source Visual Language Model Fusion for Indoor Geolocation Reliability"**.
+[![Paper](https://img.shields.io/badge/Paper-IEEE%20Access-blue)](https://ieeexplore.ieee.org/abstract/document/11359628/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-Ready-brightgreen)](docker-compose.yml)
+
+Official implementation of **"Multi-Source Visual Language Model Fusion for Indoor Geolocation Reliability"** (IEEE Access 2026).
+
+---
 
 ## 📄 Overview
 
-Indoor geolocation from images is a complex challenge due to the lack of distinctive landmarks in residential spaces. Black-box deep learning models often provide high-confidence predictions without justification, making them risky for forensic or intelligence applications.
+Indoor geolocation from images is challenging due to lack of distinctive landmarks. Black-box deep learning models provide confident predictions without justification—risky for forensic or intelligence applications.
 
-This repository implements an **interactive analysis tool** that validates these black-box predictions. It orchestrates a suite of AI microservices to provide a transparent, evidence-based assessment of an indoor image's location:
+This system validates predictions through **multi-source AI fusion**:
 
-1. **Orchestrated Microservices:** A Docker-based system that coordinates specialized agents for **Material Recognition (MATERobot)**, **Architectural Segmentation (LangSAM)**, and **Deep Hashing (GeoAI)**.
-2. **VLM-Powered Interpretation:** Uses **LLaVA v1.6** as a cognitive engine to synthesize these technical signals into natural language explanations, offering users interpretable reasoning (e.g., identifying specific window styles or flooring materials) alongside a reliability assessment.
-3. **Interactive Investigation:** Provides a web interface where users can upload images, view real-time analysis, and interrogate the system via a chat interface to understand *why* a location was chosen or rejected.
+- **Geographic Prediction**: DeiT-384 vision transformer with deep hashing for country classification (14 countries)
+- **Material Recognition**: MATERobot analyzes construction materials to validate regional patterns
+- **Architectural Segmentation**: LangSAM (Grounding DINO + SAM) identifies key elements (windows, doors, floors, ceilings)
+- **VLM Synthesis**: LLaVA v1.6 generates natural language explanations with reliability assessments
+- **Interactive Investigation**: Chat interface for interrogating predictions ("Why not France?")
 
-The underlying framework, as detailed in our IEEE Access paper, demonstrates that this multi-source approach achieves **82.2% accuracy at 5% coverage**, significantly outperforming single-source baselines.
+**Performance**: 82.2% accuracy at 5% coverage across 6 countries  
+**Paper**: [IEEE Access](https://ieeexplore.ieee.org/abstract/document/11359628/)
 
 ---
 
 ## 🏗️ System Architecture
 
-The system is built as a set of Dockerized microservices orchestrated via `docker-compose`.
+Docker microservices orchestrated via `docker-compose`:
 
-### Core Services
-
-| Service | Container Name | Description |
-| --- | --- | --- |
-| **LLaVA App** | `geo-llava` | The main orchestrator and VLM inference engine. Handles web routes (`main.py`) and fuses data from other services. |
-| **MATERobot** | `geo-materials` | Detects construction materials (wood, paint, tile, etc.) to validate regional architectural patterns. |
-| **LangSAM** | `geo-segmentation` | Performs semantic segmentation to identify and count architectural elements (windows, doors, floors, ceilings). |
-| **MongoDB** | `geo-mongo` | Stores geolocation feature vectors (Deep Hashing) and metadata for retrieval. |
-| **Migration** | `geo-db-migration` | Initializes the MongoDB with feature vectors and label data on startup. |
-
----
-
-## 🚀 Key Features
-
-* **Broad Classification Support:** The implementation supports classification across **14 countries** spanning Europe, Asia, and Latin America (see *Supported Countries* below).
-* **Interpretable Geolocation:** Instead of just a country label, the system provides a breakdown of *why* a location was predicted based on architectural evidence.
-* **Material Analysis:** Quantifies material usage.
-* **Architectural Segmentation:** Identifies key elements and compares them against a large database of curated elements.
-* **Interactive Chat:** Users can ask follow-up questions about the image (e.g., "Why is this not France?") via the LLaVA-integrated interface.
+| Service | Container | Description |
+|---------|-----------|-------------|
+| **Geolocation Engine** | `geo-llava` | DeiT-384 feature extraction, Faiss similarity search, attention visualization, LLaVA synthesis. Serves web UI + REST API. |
+| **Material Recognition** | `geo-materials` | Detects construction materials to validate regional architectural patterns. |
+| **Architectural Segmentation** | `geo-segmentation` | Identifies/localizes architectural elements using Grounding DINO and SAM. |
+| **Vector Database** | `geo-mongo` | Stores deep hashing feature vectors (128-bit geographic, 512-bit segment codes). |
+| **Data Migration** | `geo-db-migration` | Loads pre-computed embeddings into MongoDB on first startup. |
 
 ---
 
 ## 🌍 Supported Countries
 
-While the paper evaluates the methodology on a strict subset of 6 countries, this codebase comes pre-configured to classify images from **14 distinct countries**:
+**Paper evaluation** (6 countries): Argentina, Chile, France, Germany, Japan, Norway
 
-| Continent | Supported Countries |
-| --- | --- |
-| **Europe** | Germany, Poland, Norway, France, Hungary |
-| **Asia** | Pakistan, Kazakhstan, Japan, South Korea |
-| **Latin America** | Bolivia, Chile, Argentina, Colombia, Peru |
+**Full implementation** (14 countries):
+- **Europe**: Germany, Poland, Norway, France, Hungary
+- **Asia**: Pakistan, Kazakhstan, Japan, South Korea  
+- **Latin America**: Bolivia, Chile, Argentina, Colombia, Peru
 
 ---
 
 ## 🛠️ Installation & Setup
 
-### Prerequisites
+**Requirements**: NVIDIA GPU (8GB+ VRAM), Docker, ~20GB disk space
 
-* **NVIDIA GPU** (Required for inference)
-* **Docker Desktop** & **Docker Compose**
-* **NVIDIA Container Toolkit** (for GPU passthrough to Docker)
-
-### 1. Clone the Repository
-
+### 1. Clone Repository
 ```bash
 git clone https://github.com/Nkonstan/indoor-geolocalisation.git
 cd indoor-geolocalisation
-
 ```
 
-### 2. Configuration (Crucial)
-
-Create a `.env` file in the root directory to store your secrets. You can copy the structure below:
-
+### 2. Configuration
 ```bash
-# Create .env file
 touch .env
-
 ```
 
-**Content of `.env`:**
-
+Add to `.env`:
 ```env
 SECRET_KEY=your_secure_random_key_here
 MONGODB_URI=mongodb://mongodb:27017/
-
 ```
 
-### 3. Download Model Weights
+### 3. Download Models
 
-You must download the pre-trained weights and place them in the `models/` directory. The system expects the following structure:
-
-```text
+Required structure:
+```
 models/
-├── llava-v1.6-mistral-7b/       # LLaVA VLM weights
-├── clip-vit-large-patch14-336/  # CLIP encoder
-├── grounding-dino-base/         # For LangSAM
-├── sam-checkpoints/             # SAM weights
-└── hash-models/                 # Custom GeoAI deep hashing models
-    ├── indoor-geoai             # Main geolocation model (14 countries)
-    └── dhn_model_512bits_36     # Secondary deep hashing model
-
+├── llava-v1.6-mistral-7b/       # ~13GB
+├── clip-vit-large-patch14-336/  # ~1.7GB
+├── grounding-dino-base/         # ~660MB
+├── sam-checkpoints/             # ~2.4GB
+└── hash-models/
+    ├── indoor-geoai             # ~500MB
+    └── dhn_model_512bits_36     # ~200MB
 ```
-#### GeoAI Hash Models
 
-The `hash-models/` directory contains the custom deep hashing networks used for indoor image geolocation. Pre-trained weights for these models are hosted on Hugging Face:
-
-- **Indoor GeoAI (Primary Model)**  
-  Deep hashing geolocation model trained on indoor imagery across **14 countries**.  
-  Download: https://huggingface.co/nikokons/indoor-geoai  
-
-- **Secondary Model**  
-  Download: https://huggingface.co/nikokons/dhn_model_512bits_36  
+**Download links**:
+- LLaVA: https://huggingface.co/liuhaotian/llava-v1.6-mistral-7b
+- CLIP: https://huggingface.co/openai/clip-vit-large-patch14-336
+- Grounding DINO: https://huggingface.co/IDEA-Research/grounding-dino-base
+- SAM: https://github.com/facebookresearch/segment-anything#model-checkpoints
+- Indoor GeoAI: https://huggingface.co/nikokons/indoor-geoai
+- DHN 512: https://huggingface.co/nikokons/dhn_model_512bits_36
 
 ### 4. Build and Run
-
-Start the entire stack using Docker Compose:
-
 ```bash
 docker compose up --build -d
-
 ```
 
-* The **main API** (Web UI) will be available at: `http://localhost:5006`
-* **MATERobot API**: `http://localhost:5001`
-* **LangSAM API**: `http://localhost:5002`
+**Services**:
+- Web Interface: http://localhost:5006
+- MATERobot API: http://localhost:5001
+- LangSAM API: http://localhost:5002
 
 ---
 
 ## 💻 Usage
 
-### Web Interface
+Open http://localhost:5006, upload an indoor image (JPG/PNG). The system:
 
-1. Navigate to `http://localhost:5006`.
-2. Upload an indoor image (supported formats: JPG, PNG).
-3. The system will process the image through the pipeline:
-* **Step 1:** GeoAI predicts the country.
-* **Step 2:** MATERobot & LangSAM extract auxiliary features.
-* **Step 3:** LLaVA generates a reliability assessment and description.
+1. **Predicts country** via DeiT-384 + Faiss search
+2. **Extracts evidence** via MATERobot (materials) + LangSAM (architecture)
+3. **Generates explanation** via LLaVA v1.6 with reliability score
 
+Results include attention map, material distribution, segmentation, and chat interface.
 
-4. View the results, including the attention map, material distribution, and architectural segmentation on the unified dashboard.
-
-### API Endpoints (`main.py`)
-
-* **`POST /process`**: Main pipeline entry point. Upload an image to get the full analysis (Prediction + Reliability + Context).
-
-* **`POST /send_message`**: Conversational endpoint for the chat interface.
+**REST API**: See `/process` and `/send_message` endpoints for programmatic access.
 
 ---
 
 ## 📊 Evaluation Dataset
 
-The framework was evaluated in the associated paper using a curated dataset of **2,397 verified residential images** across a representative subset of six countries:
-
-* 🇦🇷 **Argentina**
-* 🇨🇱 **Chile**
-* 🇫🇷 **France**
-* 🇩🇪 **Germany**
-* 🇯🇵 **Japan**
-* 🇳🇴 **Norway**
+2,397 verified residential images across 6 countries (Argentina, Chile, France, Germany, Japan, Norway).
 
 ---
 
 ## 📜 Citation
-
-If you use this code or dataset in your research, please cite our IEEE Access paper:
-Paper Link: [https://ieeexplore.ieee.org/abstract/document/11359628/](https://ieeexplore.ieee.org/abstract/document/11359628/)
-
 ```bibtex
 @ARTICLE{Konstantinou2026MultiSource,
   author={Konstantinou, Nikolaos and Semertzidis, Theodoros and Daras, Petros},
@@ -179,19 +136,17 @@ Paper Link: [https://ieeexplore.ieee.org/abstract/document/11359628/](https://ie
   pages={13202-13217},
   doi={10.1109/ACCESS.2026.3656619}
 }
-
 ```
+
+---
 
 ## 👥 Authors
 
-* **Nikolaos Konstantinou** (nkonstantinou@iti.gr)
-* **Theodoros Semertzidis**
-* **Petros Daras**
-
-*Visual Computing Laboratory, Centre for Research and Technology Hellas (CERTH), Thessaloniki, Greece.*
+**Nikolaos Konstantinou** (nkonstantinou@iti.gr), Theodoros Semertzidis, Petros Daras  
+*Visual Computing Laboratory, CERTH, Thessaloniki, Greece*
 
 ---
 
 ## 🤝 Acknowledgments
 
-This work was supported by the **European Union Horizon-Research and Innovation Framework Programme** through the **VANGUARD Project** under Grant 101121282.
+Supported by the **EU Horizon Framework** through **VANGUARD Project** (Grant 101121282).
