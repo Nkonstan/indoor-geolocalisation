@@ -46,12 +46,7 @@ services:
       - DEBIAN_FRONTEND=noninteractive
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
-      - MONGODB_URI=mongodb://mongodb:27017/
-      - MONGODB_DATABASE=geolocation_db
       - TRANSFORMERS_OFFLINE=1
-      - CLIP_MODEL_DIR=/app/clip-vit-large-patch14-336
-      - GEO_MODEL_PATH=./indoor-geoai/model.pt
-      - DHN_MODEL_PATH=./dhn_model_512bits_36/model.pt
     volumes:
       - ./models/llava-v1.6-mistral-7b:/app/llava-v1.6-mistral-7b
       - ./models/deit-base-distilled-patch16-384:/app/deit-base-distilled-patch16-384

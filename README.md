@@ -67,7 +67,20 @@ touch .env
 Add to `.env`:
 ```env
 SECRET_KEY=your_secure_random_key_here
+# Database
 MONGODB_URI=mongodb://mongodb:27017/
+MONGODB_DATABASE=geolocation_db
+
+# Service URLs (Docker DNS names)
+MATERIAL_RECOGNITION_URL=http://materobot:5001/material_recognition
+LANGSAM_URL=http://langsam:5002/segment
+
+# Model Paths
+DEIT_MODEL_PATH=/app/deit-base-distilled-patch16-384
+MODEL_PATH=/app/llava-v1.6-mistral-7b
+GEO_MODEL_PATH=./indoor-geoai/model.pt
+DHN_MODEL_PATH=./dhn_model_512bits_36/model.pt
+CLIP_MODEL_DIR=/app/clip-vit-large-patch14-336
 ```
 
 ### 3. Download Models

@@ -5,25 +5,22 @@ import torch
 class Config:
     DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    SECRET_KEY = SECRET_KEY = os.getenv('SECRET_KEY', 'default-dev-key')
+    SECRET_KEY = os.environ['SECRET_KEY']
     # API endpoints
-    MATERIAL_RECOGNITION_URL = 'http://materobot:5001/material_recognition'
-
-    LANGSAM_URL = os.getenv('LANGSAM_URL', 'http://langsam:5002/segment')
-
+    MATERIAL_RECOGNITION_URL = os.environ['MATERIAL_RECOGNITION_URL']
+    LANGSAM_URL = os.environ['LANGSAM_URL']
     # MongoDB settings
-    MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://mongodb:27017/')
-    MONGODB_DATABASE = 'geolocation_db'
-
+    MONGODB_URI = os.environ['MONGODB_URI']
+    MONGODB_DATABASE = os.environ['MONGODB_DATABASE']
     # MongoDB collection names 
     MONGODB_BINARY_COLLECTION = 'binary_codes'  
     MONGODB_PATHS_COLLECTION = 'paths'  
     MONGODB_DHN_COLLECTION = 'segmentation_dhn'  
 
     # Model path Llava
-    MODEL_PATH = '/app/llava-v1.6-mistral-7b'
+    MODEL_PATH = os.environ['MODEL_PATH']
      # Geolocation model
-    DEIT_MODEL_PATH = os.getenv('DEIT_MODEL_PATH', '/app/deit-base-distilled-patch16-384')
+    DEIT_MODEL_PATH = os.environ['DEIT_MODEL_PATH']
 
     # Geographical model paths and files
     GEO_MODEL_PATH = os.environ.get('GEO_MODEL_PATH')
