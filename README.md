@@ -1,7 +1,6 @@
 # Multi-Source VLM Fusion for Indoor Geolocation Reliability
 
 [![Paper](https://img.shields.io/badge/Paper-IEEE%20Access-blue)](https://ieeexplore.ieee.org/abstract/document/11359628/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-Ready-brightgreen)](docker-compose.yml)
 
 Official implementation of **"Multi-Source Visual Language Model Fusion for Indoor Geolocation Reliability"** (IEEE Access 2026).
