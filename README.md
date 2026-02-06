@@ -14,7 +14,7 @@ Indoor geolocation from images is challenging due to lack of distinctive landmar
 
 This system validates predictions through **multi-source AI fusion**:
 
-- **Geographic Prediction**: DeiT-384 vision transformer with deep hashing for country classification (14 countries)
+- **Geographic Prediction**: Fine-tuned DeiT-384 vision transformer (Geoai) with deep hashing for country classification (14 countries)
 - **Material Recognition**: MATERobot analyzes construction materials to validate regional patterns
 - **Architectural Segmentation**: LangSAM (Grounding DINO + SAM) identifies key elements (windows, doors, floors, ceilings)
 - **VLM Synthesis**: LLaVA v1.6 generates natural language explanations with reliability assessments
@@ -31,7 +31,7 @@ Docker microservices orchestrated via `docker-compose`:
 
 | Service | Container | Description |
 |---------|-----------|-------------|
-| **Geolocation Engine** | `geo-llava` | DeiT-384 feature extraction, Faiss similarity search, attention visualization, LLaVA synthesis. Serves web UI + REST API. |
+| **Geolocation Engine** | `geo-llava` | Geoai for feature extraction, Faiss similarity search, attention visualization, LLaVA synthesis. Serves web UI + REST API. |
 | **Material Recognition** | `geo-materials` | Detects construction materials to validate regional architectural patterns. |
 | **Architectural Segmentation** | `geo-segmentation` | Identifies/localizes architectural elements using Grounding DINO and SAM. |
 | **Vector Database** | `geo-mongo` | Stores deep hashing feature vectors (128-bit geographic, 512-bit segment codes). |
@@ -52,7 +52,7 @@ Docker microservices orchestrated via `docker-compose`:
 
 ## 🛠️ Installation & Setup
 
-**Requirements**: NVIDIA GPU (8GB+ VRAM), Docker, ~20GB disk space
+**Requirements**: NVIDIA GPU (14GB+ VRAM), Docker
 
 ### 1. Clone Repository
 ```bash
@@ -76,17 +76,17 @@ MONGODB_URI=mongodb://mongodb:27017/
 Required structure:
 ```
 models/
-├── llava-v1.6-mistral-7b/       # ~13GB
-├── clip-vit-large-patch14-336/  # ~1.7GB
-├── grounding-dino-base/         # ~660MB
-├── sam-checkpoints/             # ~2.4GB
+├── llava-v1.6-mistral-7b/       
+├── clip-vit-large-patch14-336/  
+├── grounding-dino-base/         
+├── sam-checkpoints/             
 └── hash-models/
-    ├── indoor-geoai             # ~500MB
-    └── dhn_model_512bits_36     # ~200MB
+    ├── indoor-geoai             
+    └── dhn_model_512bits_36     
 ```
 
 **Download links**:
-- LLaVA: https://huggingface.co/liuhaotian/llava-v1.6-mistral-7b
+- llava-v1.6-mistral-7b: https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md
 - CLIP: https://huggingface.co/openai/clip-vit-large-patch14-336
 - Grounding DINO: https://huggingface.co/IDEA-Research/grounding-dino-base
 - SAM: https://github.com/facebookresearch/segment-anything#model-checkpoints
@@ -109,7 +109,7 @@ docker compose up --build -d
 
 Open http://localhost:5006, upload an indoor image (JPG/PNG). The system:
 
-1. **Predicts country** via DeiT-384 + Faiss search
+1. **Predicts country** via indoor-geoai + Faiss search
 2. **Extracts evidence** via MATERobot (materials) + LangSAM (architecture)
 3. **Generates explanation** via LLaVA v1.6 with reliability score
 
