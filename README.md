@@ -122,7 +122,7 @@ data/
 
 **Download**: [nikokons/indoor-geolocation-embeddings](https://huggingface.co/datasets/nikokons/indoor-geolocation-embeddings)
 
-### 4. Build and Run
+### 5. Build and Run
 ```bash
 docker compose up --build -d
 ```
