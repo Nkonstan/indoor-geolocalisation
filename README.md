@@ -105,6 +105,23 @@ models/
 - Indoor GeoAI: https://huggingface.co/nikokons/indoor-geoai
 - DHN 512: https://huggingface.co/nikokons/dhn_model_512bits_36
 
+### 4. Download Pre-computed Embeddings
+
+Required structure:
+```
+data/
+├── input/
+│   ├── embeddings/
+│   │   ├── geo_14c.npy               # 110,438 × 128-bit geographic hash codes
+│   │   └── geo_14c_labels.ob         # image path index for Faiss reverse lookup
+│   ├── segmentation_features_dhn.csv # 402,859 segment-level 512-bit DHN codes
+│   └── segmentations/                # reference segmentation images
+└── output/
+    └── static/                       # shared write volume across containers
+```
+
+**Download**: [nikokons/indoor-geolocation-embeddings](https://huggingface.co/datasets/nikokons/indoor-geolocation-embeddings)
+
 ### 4. Build and Run
 ```bash
 docker compose up --build -d
