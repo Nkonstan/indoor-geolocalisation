@@ -25,7 +25,8 @@ app.logger.addHandler(handler)
 
 logger.info("MATERobot service starting up")
 
-
+from materobot_logic import MATERobotModel
+MATERobotModel.get_instance()
 
 @app.route('/material_recognition', methods=['POST'])
 def material_recognition():
