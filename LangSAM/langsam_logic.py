@@ -219,16 +219,28 @@ def process_segmentation(image_path, targets):
 
     # Different confidence thresholds for different elements
     CONFIDENCE_THRESHOLDS = {
-        'door': 0.44,  # 50%
-        'window': 0.44,  # 50%
-        'ceiling': 0.44,  # 50%
-        'floor': 0.44  # 50%
+        'door': 0.50,  # 50%
+        'window': 0.50,  # 50%
+        'ceiling': 0.61,  # 50%
+        'floor': 0.50  # 50%
     }
 
     try:
+
+        # for target in targets:
+        #     try:
+        #         prompt = f"a {target} in the interior image"
+        PROMPTS = {
+        'floor': 'floor',
+        'ceiling': 'ceiling',
+        'door': 'door',
+        'window': 'window',
+        }
+
         for target in targets:
             try:
-                prompt = f"a {target} in the interior image"
+                prompt = PROMPTS.get(target, f"a {target} in the interior scene")
+
                 prediction = model.predict(
                     [image],
                     [prompt],
@@ -318,6 +330,19 @@ def process_segmentation(image_path, targets):
                                 rmin, rmax = np.where(rows)[0][[0, -1]]
                                 cmin, cmax = np.where(cols)[0][[0, -1]]
                                 cropped = segmented[rmin:rmax + 1, cmin:cmax + 1]
+
+
+                                # Mask fill ratio check
+                                total_pixels = cropped.shape[0] * cropped.shape[1]
+                                colored_pixels = np.sum(np.any(cropped > 10, axis=2))
+                                fill_ratio = colored_pixels / total_pixels
+
+                                if fill_ratio < 0.35:
+                                    logger.info(f"{target} rejected: mask too sparse (fill={fill_ratio:.2%})")
+                                    results[target] = {'found': False, 'reason': f'Mask too sparse ({fill_ratio:.2%} colored)'}
+                                    del segmented, image_array, mask_3d, best_mask
+                                    enhanced_cleanup()
+                                    continue
 
                                 filename = f"{target}_{uuid.uuid4()}.png"
                                 output_path = os.path.join('static', filename)
